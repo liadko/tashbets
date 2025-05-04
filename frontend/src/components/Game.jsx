@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
-import './PuzzleViewer.css'
+import { useEffect, useState } from 'react'
+import './Game.css'
+import Cluebar from './Clubar'
+import Grid from './Grid'
 
-
-function PuzzleViewer() {
+function Game() {
     // ----------- state -----------
     const initialGrid = [
         ["D", "", "", "", ""],
@@ -45,7 +46,7 @@ function PuzzleViewer() {
     // key input
     useEffect(() => {
         function handleKeyDown(event) {
-            if(!grid) return; // don't allow clicks before grid has formed
+            if (!grid) return // don't allow clicks before grid has formed
 
             // arrows
             let arrowDirection = 0
@@ -73,7 +74,6 @@ function PuzzleViewer() {
             // letter input
             else if (/^[a-zA-z]$/.test(event.key)) {
                 const char = event.key.toUpperCase()
-                console.log(char)
                 editGuess(playerState.cell, char)
 
                 setCell(movedSelected(playerState.dir, 1))
@@ -103,9 +103,17 @@ function PuzzleViewer() {
         }
     }, [grid, playerState])
 
+
+    // Game Logic
+    function startGame(grid) {
+        const firstCell = getValidCell(grid)
+        setCell(firstCell)
+    }
+
+    // Player State Functions
     function setDir(newDir) {
         if (newDir !== 0 && newDir !== 1) {
-            throw new Error(`Invalid direction: ${newDir}`);
+            throw new Error(`Invalid direction: ${newDir}`)
         }
 
         setPlayerState((prev) => ({
@@ -115,7 +123,7 @@ function PuzzleViewer() {
     }
     function setCell(newCell) {
         if (!Array.isArray(newCell)) {
-            throw new Error(`Invalid cell: ${newCell}`);
+            throw new Error(`Invalid cell: ${newCell}`)
         }
 
         setPlayerState((prev) => ({
@@ -124,13 +132,12 @@ function PuzzleViewer() {
         }))
     }
 
+    // Grid functions 
     function createGrid(rawCells) {
-        const size = 5//Math.sqrt(rawAnswers.length);
-        const grid = [];
-
+        const size = 5//Math.sqrt(rawAnswers.length)
+        const grid = []
 
         const validGrid = !!rawCells
-
 
 
         for (let row = 0; row < size; row++) {
@@ -143,7 +150,7 @@ function PuzzleViewer() {
                 const isBlock = validGrid && (!rawCell?.answer)
 
                 let answerChar = "???"; let label = undefined; let clues = undefined;
-                if(validGrid && !isBlock) {
+                if (validGrid && !isBlock) {
                     answerChar = rawCell.answer
                     label = rawCell.label
                     clues = rawCell.clues
@@ -164,9 +171,8 @@ function PuzzleViewer() {
             grid.push(rowData)
         }
 
-        return grid;
+        return grid
     }
-
     function editGuess(cellPos, newGuess) {
         const [row, col] = cellPos
 
@@ -184,36 +190,13 @@ function PuzzleViewer() {
         )
         )
     }
-    // ----------- Render Utilities -----------
-    function startGame(grid) {
-        const firstCell = getValidCell(grid);
-        setCell(firstCell)
-    }
     function getValidCell(grid) {
-        for(let i = 0; i < gridSize; i++) {
-            if(!grid[0][i].isBlock)
+        for (let i = 0; i < gridSize; i++) {
+            if (!grid[0][i].isBlock)
                 return [0, i]
         }
         throw new Error("Couldn't find valid cell")
     }
-
-    function handleClickCell(row, col) {
-        if(!grid) return; // don't allow clicks before grid has formed
-
-        if (row == playerState.cell[0] && col == playerState.cell[1]) {
-            setDir(playerState.dir ^ 1)
-            return
-        }
-
-        // blocked cell
-        if (grid[row][col].isBlock)
-            return
-
-        // clicked on other cell
-        setCell([row, col])
-    }
-
-    // depends on playerState and grid being live.
     function movedSelected(direction, move) {
         const movementAxis = direction ^ 1
         const updatedCell = [...playerState.cell]
@@ -228,52 +211,35 @@ function PuzzleViewer() {
         return updatedCell
 
     }
+    function handleClickCell(row, col) {
+        if (!grid) return // don't allow clicks before grid has formed
 
-    function getCellClass(row, col) {
-        let classes = "cell "
+        if (row == playerState.cell[0] && col == playerState.cell[1]) {
+            setDir(playerState.dir ^ 1)
+            return
+        }
 
-        if (row == playerState.cell[0] && col == playerState.cell[1])
-            classes += " selected"
-        else if (grid && grid[row][col].isBlock)
-            classes += " blocked"
-        else if (playerState.dir == 0 && row == playerState.cell[0])
-            classes += " highlighted"
-        else if (playerState.dir == 1 && col == playerState.cell[1])
-            classes += " highlighted"
+        // blocked cell
+        if (grid[row][col].isBlock)
+            return
 
-
-
-        return classes
+        // clicked on other cell
+        setCell([row, col])
     }
+
 
     // ----------- Render -----------
     return (
         <>
             <div className="puzzle-area">
-                <div className="clue-bar">
-                    <div className="clue-label">1A</div>
-                    <div className="clue-text">Niggin in the night?</div>
-                </div>
-                <div className="grid-wrapper">
-                    <div className="grid"
-                        style={{ "--grid-rows": grid.length }}>
-                        {grid.map((rowData, rowId) =>
-                            rowData.map((cell, colId) =>
-                                <div key={`${rowId}-${colId}`}
-                                    className={getCellClass(rowId, colId)}
-                                    onClick={() => handleClickCell(rowId, colId)}>
-                                    <span className="letter">{cell.guess}</span>
-                                    <span className="number">{cell.label}</span>
-                                </div>))
-                        }
-                    </div>
-                </div>
+                <Cluebar />
+                <Grid grid={grid} playerState={playerState} onCellClick={handleClickCell} />
             </div>
         </>
 
     )
 }
 
-export default PuzzleViewer
+export default Game
 
 
