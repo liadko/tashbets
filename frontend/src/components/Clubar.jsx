@@ -1,18 +1,33 @@
 import './Cluebar.css'
 
 
-function Cluebar() {
+function Cluebar({clues, selectedClues}) {
     // ----------- State -----------
 
     // ----------- Render Utilities -----------
 
+    function getLabel() {
+        if(!clues.length) return
 
+        const dir = selectedClues.dir
+        const clue = clues[selectedClues.clues[dir]]
+
+        return clue.label.toString() + (dir == "Across" ? "A" : "D")
+    }
+    function getClueText() {
+        if(!clues.length) return
+
+        const dir = selectedClues.dir
+        const clue = clues[selectedClues.clues[dir]]
+
+        return clue.text
+    }
     // ----------- Render -----------
     return (
         <>
             <div className="clue-bar">
-                <div className="cluebar-label">1A</div>
-                <div className="cluebar-text">Niggin in the night?</div>
+                <div className="cluebar-label">{getLabel()}</div>
+                <div className="cluebar-text">{getClueText()}</div>
             </div>
         </>
 

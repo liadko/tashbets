@@ -23,7 +23,7 @@ function Game() {
 
 
     const [playerState, setPlayerState] = useState(initialPlayerState)
-    const [grid, setGrid] = useState(() => createGrid(null))
+    const [gridState, setGrid] = useState(() => createGrid(null))
 
 
 
@@ -47,7 +47,7 @@ function Game() {
     // key input
     useEffect(() => {
         function handleKeyDown(event) {
-            if (!grid) return // don't allow clicks before grid has formed
+            if (!gridState) return // don't allow clicks before grid has formed
 
             // arrows
             let arrowDirection = 0
@@ -83,7 +83,7 @@ function Game() {
             // backspace
             else if (event.key == "Backspace") {
                 // erasing self
-                if (grid[playerState.cell[0]][playerState.cell[1]].guess.length) {
+                if (gridState[playerState.cell[0]][playerState.cell[1]].guess.length) {
                     editGuess(playerState.cell, "")
                 }
                 // erasing behind
@@ -102,13 +102,14 @@ function Game() {
         return () => {
             window.removeEventListener("keydown", handleKeyDown)
         }
-    }, [grid, playerState])
+    }, [gridState, playerState])
 
 
     // Game Logic
     function startGame(grid) {
-        const firstCell = getValidCell(grid)
-        setCell(firstCell)
+        // const firstCell = getValidCell(grid)
+        // setCell(firstCell)
+        smartTeleport([0, 0], 0, grid)
     }
 
     // Player State Functions
@@ -131,6 +132,38 @@ function Game() {
             ...prev,
             cell: newCell
         }))
+    }
+    // gets cell and direction. moves selection to nearest empty cell.
+    // if line is full goes to the initially requested cell
+    //initialCellPos = [int, int] , dir = 0 or 1 
+    function smartTeleport(initialCellPos, dir, grid) {
+        if (!Array.isArray(initialCellPos)) {
+            throw new Error(`Invalid cell or dir: ${initialCellPos}, ${dir}`)
+        }
+
+        if (grid === undefined)
+            grid = gridState
+
+        const moveDirection = dir ^ 1
+        let currentCellPos = [...initialCellPos];
+        let currentCell = getCell(initialCellPos, grid)
+        while (currentCell.isBlock || currentCell.guess != "") {
+            currentCellPos[moveDirection]++;
+
+            if (currentCellPos[moveDirection] >= gridSize) {
+                currentCellPos = initialCellPos
+                break;
+            }
+
+            currentCell = getCell(currentCellPos, grid);
+        }
+
+        setPlayerState((prev) => ({
+            ...prev,
+            cell: currentCellPos
+        }))
+
+        setDir(dir)
     }
 
     // Grid functions 
@@ -191,13 +224,16 @@ function Game() {
         )
         )
     }
-    function getValidCell(grid) {
-        for (let i = 0; i < gridSize; i++) {
-            if (!grid[0][i].isBlock)
-                return [0, i]
+    function getCell(cellPos, grid) {
+        if (!Array.isArray(cellPos) || cellPos.length != 2) {
+            throw new Error(`Invalid cell: ${cellPos}`)
         }
-        throw new Error("Couldn't find valid cell")
+
+        return grid[cellPos[0]][cellPos[1]]
     }
+
+
+    // assumes live gridState
     function movedSelected(direction, move) {
         const movementAxis = direction ^ 1
         const updatedCell = [...playerState.cell]
@@ -206,14 +242,16 @@ function Game() {
 
         // check if current cell is invalid, if so, trace back the movement
         if (updatedCell[movementAxis] < 0 || updatedCell[movementAxis] >= gridSize
-            || grid[updatedCell[0]][updatedCell[1]].isBlock)
+            || gridState[updatedCell[0]][updatedCell[1]].isBlock)
             updatedCell[movementAxis] -= move
 
         return updatedCell
 
     }
+
+    // assumes live gridState
     function handleClickCell(row, col) {
-        if (!grid) return // don't allow clicks before grid has formed
+        if (!gridState) return // don't allow clicks before grid has formed
 
         if (row == playerState.cell[0] && col == playerState.cell[1]) {
             setDir(playerState.dir ^ 1)
@@ -221,7 +259,7 @@ function Game() {
         }
 
         // blocked cell
-        if (grid[row][col].isBlock)
+        if (gridState[row][col].isBlock)
             return
 
         // clicked on other cell
@@ -234,29 +272,28 @@ function Game() {
             id: index,
             label: clue.label,
             text: clue.text[0].plain,
-            direction: clue.direction,
+            dir: clue.direction,
             cells: clue.cells
         }))
     }, [puzzleData])
 
-    //  TODO
-    function handleClueClick(clue) {
-        setPlayerState({
-            cell: clue.cells[0],
-            dir: clue.direction === "Across" ? 0 : 1
-        })
-    }
+    // currently selected clue
+    const selectedClues = useMemo(() => {
+        const clues = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clues
+        return { clues, dir: playerState.dir }
+    }, [playerState, puzzleData, gridState])
 
+    //  TODO
     // ----------- Render -----------
     return (
         <>
             <div className="container">
                 <div className="puzzle-area">
-                    <Cluebar />
-                    <Grid grid={grid} playerState={playerState} onCellClick={handleClickCell} />
+                    <Cluebar clues={parsedClues} selectedClues={selectedClues}/>
+                    <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} />
 
                 </div>
-                <ClueStack clues={parsedClues}/>
+                <ClueStack clues={parsedClues} selectedClues={selectedClues} teleport={smartTeleport} />
             </div>
         </>
 

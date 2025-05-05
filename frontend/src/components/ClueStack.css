@@ -47,6 +47,10 @@
 
 }
 
+.clue.selected {
+    background-color:#A7D8FF;
+}
+
 .clue-label {
 
     align-self: flex-start;
@@ -60,17 +64,23 @@
 .clue-text {
     margin-right: auto;
     flex: 1;
+    top: 50%;
     font-size: 1.1em;
     font-weight: 400;
     text-align: left;
 }
+
 .clue-side-highlight {
     width: 12px;
     height: 100%;
-    background-color:#A7D8FF;
-    margin-right: 15px;
+    
+    margin-right: 10px;
 }
 
+.clue.sibling .clue-side-highlight {
+    background-color:#A7D8FF;
+}
+/* 
 .clue:hover {
     background-color: #f0f0f0;
-}
+} */
