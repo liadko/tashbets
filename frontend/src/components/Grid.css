@@ -1,5 +1,5 @@
 .grid-wrapper {
-    width: 500px;
+    width: 100%;
     aspect-ratio: 1;
     margin: 0 auto;
 }
@@ -16,12 +16,16 @@
 
     justify-content: center;
     border: 2.5px solid black;
+
+    font-size: clamp(8px, 2.5vmin, 20px);
 }
 
 .cell {
     position: relative;
     border: 0.5px solid rgb(70, 70, 70);
     background-color: #FFFFFF;
+
+    width: 100%;
 }
 
 .selected {
@@ -42,10 +46,10 @@
 
 .letter {
     position: absolute;
-    top: 55%;
+    top: 63%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 4.5em;
+    font-size: 2.9em;
     color: black;
     user-select: none;
 
@@ -53,10 +57,10 @@
 
 .number {
     position: absolute;
-    top: 15%;
-    left: 10%;
+    top: 18%;
+    left: 12%;
     transform: translate(-50%, -50%);
-    font-size: 1.6em;
+    font-size: 1.2em;
     font-weight: 500;
     color: black;
     user-select: none;

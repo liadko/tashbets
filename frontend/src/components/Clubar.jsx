@@ -11,8 +11,8 @@ function Cluebar() {
     return (
         <>
             <div className="clue-bar">
-                <div className="clue-label">1A</div>
-                <div className="clue-text">Niggin in the night?</div>
+                <div className="cluebar-label">1A</div>
+                <div className="cluebar-text">Niggin in the night?</div>
             </div>
         </>
 

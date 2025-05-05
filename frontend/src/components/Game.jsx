@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import './Game.css'
 import Cluebar from './Clubar'
 import Grid from './Grid'
+import ClueStack from './ClueStack'
 
 function Game() {
     // ----------- state -----------
@@ -184,7 +185,7 @@ function Game() {
                         guess: newGuess,
                     }
                 }
-                else 
+                else
                     return cell
             })
         )
@@ -227,13 +228,35 @@ function Game() {
         setCell([row, col])
     }
 
+    // Clue functions
+    const parsedClues = useMemo(() => {
+        return (puzzleData?.body[0]?.clues ?? []).map((clue, index) => ({
+            id: index,
+            label: clue.label,
+            text: clue.text[0].plain,
+            direction: clue.direction,
+            cells: clue.cells
+        }))
+    }, [puzzleData])
+
+    //  TODO
+    function handleClueClick(clue) {
+        setPlayerState({
+            cell: clue.cells[0],
+            dir: clue.direction === "Across" ? 0 : 1
+        })
+    }
 
     // ----------- Render -----------
     return (
         <>
-            <div className="puzzle-area">
-                <Cluebar />
-                <Grid grid={grid} playerState={playerState} onCellClick={handleClickCell} />
+            <div className="container">
+                <div className="puzzle-area">
+                    <Cluebar />
+                    <Grid grid={grid} playerState={playerState} onCellClick={handleClickCell} />
+
+                </div>
+                <ClueStack clues={parsedClues}/>
             </div>
         </>
 
