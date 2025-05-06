@@ -3,9 +3,9 @@ import './Grid.css'
 import Cluebar from './Clubar'
 
 
-function Grid({grid, onCellClick, playerState}) {
+function Grid({ grid, onCellClick, playerState, clues, selectedClues }) {
     // ----------- state -----------
-    
+
 
     // ----------- Effects -----------
 
@@ -24,7 +24,15 @@ function Grid({grid, onCellClick, playerState}) {
         else if (playerState.dir == 1 && col == playerState.cell[1])
             classes += " highlighted"
 
-
+        const selectedClue_id = clues?.[selectedClues?.clue_ids?.[selectedClues?.dir]]?.id
+        if(selectedClue_id != undefined) {
+            grid[row][col].clues?.forEach((clue_id, index) => {
+                if(clues[clue_id].relatives == selectedClue_id) {
+                    classes += " relative"
+                }
+            })
+        }
+        
 
         return classes
     }

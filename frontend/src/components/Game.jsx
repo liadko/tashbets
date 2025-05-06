@@ -80,7 +80,7 @@ function Game() {
                 setCell(movedSelected(playerState.dir, 1))
             }
 
-            // backspace
+            // backspace - delete letter
             else if (event.key == "Backspace") {
                 // erasing self
                 if (gridState[playerState.cell[0]][playerState.cell[1]].guess.length) {
@@ -92,6 +92,17 @@ function Game() {
                     editGuess(newCell, "")
                     setCell(newCell)
                 }
+
+            }
+
+            // enter - skip clue
+            else if (event.key == "Enter") {
+                
+                const nextClueIndex = (selectedClues.clue_ids[selectedClues.dir] + 1) % parsedClues.length
+                const nextClue = parsedClues[nextClueIndex]
+                const clueFirstCell = nextClue.cells[0]
+                console.log(clueFirstCell)
+                smartTeleport(getGridPosByCellIndex(clueFirstCell), nextClue.dir, gridState)
 
             }
 
@@ -138,11 +149,16 @@ function Game() {
     //initialCellPos = [int, int] , dir = 0 or 1 
     function smartTeleport(initialCellPos, dir, grid) {
         if (!Array.isArray(initialCellPos)) {
-            throw new Error(`Invalid cell or dir: ${initialCellPos}, ${dir}`)
+            throw new Error(`Invalid cell: ${initialCellPos}`)
         }
 
-        if (grid === undefined)
-            grid = gridState
+        if (grid === undefined) grid = gridState
+        if (typeof dir === 'string')
+        {
+            if(dir != "Across" && dir != "Down") throw new Error(`Invalid dir: ${dir}`)
+            dir = dir == "Across" ? 0 : 1;
+        }
+
 
         const moveDirection = dir ^ 1
         let currentCellPos = [...initialCellPos];
@@ -252,36 +268,44 @@ function Game() {
     // assumes live gridState
     function handleClickCell(row, col) {
         if (!gridState) return // don't allow clicks before grid has formed
+        
 
         if (row == playerState.cell[0] && col == playerState.cell[1]) {
             setDir(playerState.dir ^ 1)
             return
         }
-
+        
         // blocked cell
         if (gridState[row][col].isBlock)
             return
+
 
         // clicked on other cell
         setCell([row, col])
     }
 
     // Clue functions
+
     const parsedClues = useMemo(() => {
         return (puzzleData?.body[0]?.clues ?? []).map((clue, index) => ({
             id: index,
             label: clue.label,
             text: clue.text[0].plain,
             dir: clue.direction,
-            cells: clue.cells
+            cells: clue.cells,
+            relatives: clue.relatives
         }))
     }, [puzzleData])
 
     // currently selected clue
     const selectedClues = useMemo(() => {
-        const clues = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clues
-        return { clues, dir: playerState.dir }
+        const clue_ids = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clues
+        return { clue_ids, dir: playerState.dir }
     }, [playerState, puzzleData, gridState])
+
+    function getGridPosByCellIndex(cellIndex) {
+        return [Math.floor(cellIndex / 5), cellIndex % 5]
+    }
 
     //  TODO
     // ----------- Render -----------
@@ -290,7 +314,7 @@ function Game() {
             <div className="container">
                 <div className="puzzle-area">
                     <Cluebar clues={parsedClues} selectedClues={selectedClues}/>
-                    <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} />
+                    <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues}/>
 
                 </div>
                 <ClueStack clues={parsedClues} selectedClues={selectedClues} teleport={smartTeleport} />

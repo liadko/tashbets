@@ -51,6 +51,10 @@
     background-color:#A7D8FF;
 }
 
+.clue.relative {
+    background-color:#FFECA0;
+}
+
 .clue-label {
 
     align-self: flex-start;

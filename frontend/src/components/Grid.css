@@ -28,21 +28,27 @@
     width: 100%;
 }
 
-.selected {
+.cell.blocked {
+    background-color: #000000;
+
+}
+.cell.selected {
     background-color: #FFDA00;
 
 }
 
-.highlighted {
+.cell.highlighted {
     background-color: #A7D8FF;
 
 }
 
-.blocked {
-    background-color: #000000;
-
+.cell.relative {
+    background-color: #FFECA0;
 }
 
+.cell.relative.cell.highlighted {
+    background-color: #C6DFDE;
+}
 
 .letter {
     position: absolute;

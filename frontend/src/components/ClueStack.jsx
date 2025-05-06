@@ -12,12 +12,22 @@ function ClueStack({ clues, selectedClues, teleport }) {
     // })
 
     function getClueClass(clue_id) {
+
         let c = "clue "
+        
         const selectedClueIndex = selectedClues.dir;
-        if (clue_id === selectedClues.clues[selectedClueIndex])
+        const selected_clue_id = selectedClues.clue_ids[selectedClueIndex]
+        if (clue_id === selectedClues.clue_ids[selectedClueIndex])
             c += "selected "
-        else if (clue_id === selectedClues.clues[selectedClueIndex ^ 1])
+        else if (clue_id === selectedClues.clue_ids[selectedClueIndex ^ 1])
             c += "sibling "
+
+        const relative_id = clues[selected_clue_id].relatives?.[0]
+        if (relative_id && relative_id == clue_id) {
+            c += "relative "
+            //console.log("relative: ", relative_id)
+        }
+
 
         return c
     }

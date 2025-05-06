@@ -10,7 +10,7 @@ function Cluebar({clues, selectedClues}) {
         if(!clues.length) return
 
         const dir = selectedClues.dir
-        const clue = clues[selectedClues.clues[dir]]
+        const clue = clues[selectedClues.clue_ids[dir]]
 
         return clue.label.toString() + (dir == "Across" ? "A" : "D")
     }
@@ -18,7 +18,7 @@ function Cluebar({clues, selectedClues}) {
         if(!clues.length) return
 
         const dir = selectedClues.dir
-        const clue = clues[selectedClues.clues[dir]]
+        const clue = clues[selectedClues.clue_ids[dir]]
 
         return clue.text
     }
