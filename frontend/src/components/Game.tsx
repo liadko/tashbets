@@ -1,31 +1,45 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import './Game.css'
 import Cluebar from './Clubar'
 import Grid from './Grid'
 import ClueStack from './ClueStack'
+import LoginPage from './LoginPage'
+import { useWebSocket } from './useWebSocket'
 
-function Game() {
-    // ----------- state -----------
-    const initialGrid = [
-        ["D", "", "", "", ""],
-        ["", "B", "", "", ""],
-        ["", "", "C", "", ""],
-        ["", "", "", "D", "."],
-        ["", "", "", "", "."],
-    ]
+import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState } from '../types/gameTypes'
 
-    const initialPlayerState = {
+export default function Game() {
+    // ----------- constants -----------
+
+    const initialPlayerState: PlayerState = {
         cell: [-1, -1],
-        dir: 0,  // 0 horiz. 1 vert.
+        dir: 0,  // 0 = horizontal, 1 = vertical
     }
     const gridSize = 5
-    const [puzzleData, setPuzzleData] = useState(null)
+
+    // ----------- puzzle state -----------
+    const [puzzleData, setPuzzleData] = useState<RawPuzzleData | null>(null)
+    const [gridState, setGrid] = useState<GridState>(() => createGrid(null))
+
+    // ----------- player state -----------
+    const [loggedIn, setLoggedIn] = useState(true)
+    const [playerState, setPlayerState] = useState<PlayerState>(initialPlayerState)
 
 
-    const [playerState, setPlayerState] = useState(initialPlayerState)
-    const [gridState, setGrid] = useState(() => createGrid(null))
 
+    // ----------- Networking -----------
 
+    // const { sendMessage } = useWebSocket('ws://localhost:8080/ws', useCallback((msg) => {
+    //     console.log("Server Message: ", msg)
+    //     // your handling logic
+    // }, [])
+    // )
+
+    // const handleSend = () => {
+    //     console.log("Sending Message")
+    //     const message = { type: 'guess', cell: [1, 2], letter: 'A' }
+    //     sendMessage(message)
+    // }
 
     // ----------- Effects -----------
 
@@ -33,9 +47,9 @@ function Game() {
     useEffect(() => {
         fetch("2024-12-26.json")
             .then((res) => res.json())
-            .then((data) => {
+            .then((data : RawPuzzleData) => {
                 setPuzzleData(data)
-                const newGrid = createGrid(data.body[0].cells)
+                const newGrid = createGrid(data?.body[0].cells ?? null)
                 setGrid(newGrid)
                 startGame(newGrid)
             })
@@ -46,12 +60,12 @@ function Game() {
 
     // key input
     useEffect(() => {
-        function handleKeyDown(event) {
-            if (!gridState) return // don't allow clicks before grid has formed
+        function handleKeyDown(event: KeyboardEvent) {
+            if (!gridState || !puzzleData) return // don't allow clicks before grid has formed
 
             // arrows
             let arrowDirection = 0
-            let specificArrow = 0 // default 0
+            let specificArrow: (-1 | 0 | 1) = 0 // default 0
             if (event.key === "ArrowLeft") specificArrow = -1
             else if (event.key === "ArrowRight") specificArrow = 1
             else if (event.key === "ArrowUp") {
@@ -66,7 +80,7 @@ function Game() {
             // arrow was pressed
             if (specificArrow != 0) {
                 // changing direction
-                if (arrowDirection != playerState.dir) setDir(arrowDirection)
+                if (arrowDirection != playerState.dir) setDir(arrowDirection as 0 | 1)
 
                 // moving with direction
                 else setCell(movedSelected(arrowDirection, specificArrow))
@@ -75,23 +89,26 @@ function Game() {
             // letter input
             else if (/^[a-zA-z]$/.test(event.key)) {
                 const char = event.key.toUpperCase()
+                //if (char != getCell(playerState.cell, gridState).guess) handleSend()
+
                 editGuess(playerState.cell, char)
 
-                const nextPosition =  movedSelected(playerState.dir, 1)
-                if(nextPosition[0] == playerState.cell[0] && 
-                    nextPosition[1] == playerState.cell[1]){
+                const nextPosition = movedSelected(playerState.dir, 1)
+                if (nextPosition[0] == playerState.cell[0] &&
+                    nextPosition[1] == playerState.cell[1]) {
                     const teleportLocation = getFirstEmptyCellPos(
                         playerState.cell[playerState.dir], playerState.dir, gridState)
-                    if(teleportLocation) setCell(teleportLocation)
+                    if (teleportLocation) setCell(teleportLocation)
                 }
                 else
                     setCell(nextPosition)
+
             }
 
             // backspace - delete letter
             else if (event.key == "Backspace") {
                 // erasing self
-                if (gridState[playerState.cell[0]][playerState.cell[1]].guess.length) {
+                if (getCell(playerState.cell, gridState).guess?.length) {
                     editGuess(playerState.cell, "")
                 }
                 // erasing behind
@@ -105,12 +122,15 @@ function Game() {
 
             // enter - skip clue
             else if (event.key == "Enter") {
+                if (!puzzleData || !selectedClues) return
 
-                const nextClueIndex = (selectedClues.clue_ids[selectedClues.dir] + 1) % parsedClues.length
-                const nextClue = parsedClues[nextClueIndex]
-                const clueFirstCell = nextClue.cells[0]
-                smartTeleport(getGridPosByCellIndex(clueFirstCell), nextClue.dir, gridState)
-
+                const currentIndex = selectedClues.mainClueId;
+                const nextClueIndex = (currentIndex + 1) % parsedClues.length;
+                const nextClue = parsedClues[nextClueIndex];
+            
+                const clueFirstCellIndex = nextClue.cells[0];
+                smartTeleport(getGridPosByCellIndex(clueFirstCellIndex), nextClue.dir, gridState);
+            
             }
 
         }
@@ -124,28 +144,21 @@ function Game() {
 
 
     // Game Logic
-    function startGame(grid) {
+    function startGame(grid: GridState) {
         // const firstCell = getValidCell(grid)
         // setCell(firstCell)
         smartTeleport([0, 0], 0, grid)
     }
 
     // Player State Functions
-    function setDir(newDir) {
-        if (newDir !== 0 && newDir !== 1) {
-            throw new Error(`Invalid direction: ${newDir}`)
-        }
+    function setDir(newDir: 0 | 1) {
 
         setPlayerState((prev) => ({
             ...prev,
             dir: newDir
         }))
     }
-    function setCell(newCell) {
-        if (!Array.isArray(newCell)) {
-            throw new Error(`Invalid cell: ${newCell}`)
-        }
-
+    function setCell(newCell: [number, number]) {
         setPlayerState((prev) => ({
             ...prev,
             cell: newCell
@@ -154,30 +167,23 @@ function Game() {
     // gets cell and direction. moves selection to nearest empty cell.
     // if line is full goes to the initially requested cell
     //initialCellPos = [int, int] , dir = 0 or 1 
-    function smartTeleport(initialCellPos, dir, grid) {
-        if (!Array.isArray(initialCellPos)) {
-            throw new Error(`Invalid cell: ${initialCellPos}`)
-        }
+    function smartTeleport(initialCellPos: [number, number], dir: 0 | 1, grid: GridState | null) {
 
-        if (grid === undefined) grid = gridState
-        if (typeof dir === 'string') {
-            if (dir != "Across" && dir != "Down") throw new Error(`Invalid dir: ${dir}`)
-            dir = dir == "Across" ? 0 : 1;
-        }
+        if (grid === null) grid = gridState
 
 
         const moveDirection = dir ^ 1
-        let currentCellPos = [...initialCellPos];
+        let currentCellPos = [...initialCellPos] as [number, number]
         let currentCell = getCell(initialCellPos, grid)
         while (currentCell.isBlock || currentCell.guess != "") {
-            currentCellPos[moveDirection]++;
+            currentCellPos[moveDirection]++
 
             if (currentCellPos[moveDirection] >= gridSize) {
                 currentCellPos = initialCellPos
-                break;
+                break
             }
 
-            currentCell = getCell(currentCellPos, grid);
+            currentCell = getCell(currentCellPos, grid)
         }
 
         setPlayerState((prev) => ({
@@ -189,9 +195,9 @@ function Game() {
     }
 
     // Grid functions 
-    function createGrid(rawCells) {
+    function createGrid(rawCells: RawCell[] | null): GridState {
         const size = 5//Math.sqrt(rawAnswers.length)
-        const grid = []
+        const grid: GridState = []
 
         const validGrid = !!rawCells
 
@@ -203,25 +209,24 @@ function Game() {
                 const cellIndex = row * size + col
                 const rawCell = rawCells?.[cellIndex]
 
-                const isBlock = validGrid && (!rawCell?.answer)
+                const isBlock = (rawCell?.answer) == undefined
 
-                let answerChar = "???"; let label = undefined; let clues = undefined;
-                if (validGrid && !isBlock) {
-                    answerChar = rawCell.answer
-                    label = rawCell.label
-                    clues = rawCell.clues
-                }
+                const answer = rawCell?.answer
+                const label = rawCell?.label
+                const clueIds = rawCell?.clues
 
-
-                rowData.push({
+                const cell: Cell = {
                     row,
                     col,
+
                     guess: "",
-                    answer: answerChar,
+                    answer,
                     isBlock,
                     label,
-                    clues,
-                })
+                    clueIds,
+                };
+
+                rowData.push(cell)
             }
 
             grid.push(rowData)
@@ -229,7 +234,8 @@ function Game() {
 
         return grid
     }
-    function editGuess(cellPos, newGuess) {
+
+    function editGuess(cellPos: [number, number], newGuess: string) {
         const [row, col] = cellPos
 
         setGrid((prev) => prev.map((rowData, r) =>
@@ -246,7 +252,7 @@ function Game() {
         )
         )
     }
-    function getCell(cellPos, grid) {
+    function getCell(cellPos: [number, number], grid: GridState): Cell {
         if (!Array.isArray(cellPos) || cellPos.length != 2) {
             throw new Error(`Invalid cell: ${cellPos}`)
         }
@@ -255,7 +261,7 @@ function Game() {
     }
 
     // returns undefined if doesn't exist
-    function getFirstEmptyCellPos(positionIndex, dir, grid) {
+    function getFirstEmptyCellPos(positionIndex: number, dir: 0 | 1, grid: GridState): [number, number] | undefined {
 
         for (let i = 0; i < 5; i++) {
             if (dir == 0 && grid[positionIndex][i].guess == "" && !grid[positionIndex][i].isBlock) {
@@ -270,9 +276,9 @@ function Game() {
 
     }
     // assumes live gridState
-    function movedSelected(direction, move) {
+    function movedSelected(direction: 0 | 1, move: -1 | 1): [number, number] {
         const movementAxis = direction ^ 1
-        const updatedCell = [...playerState.cell]
+        const updatedCell = [...playerState.cell] as [number, number]
 
         updatedCell[movementAxis] += move
 
@@ -286,12 +292,12 @@ function Game() {
     }
 
     // assumes live gridState
-    function handleClickCell(row, col) {
+    function handleClickCell(row: number, col: number) {
         if (!gridState) return // don't allow clicks before grid has formed
 
 
         if (row == playerState.cell[0] && col == playerState.cell[1]) {
-            setDir(playerState.dir ^ 1)
+            setDir((playerState.dir ^ 1) as 0 | 1)
             return
         }
 
@@ -306,28 +312,35 @@ function Game() {
 
     // Clue functions
 
-    const parsedClues = useMemo(() => {
-        return (puzzleData?.body[0]?.clues ?? []).map((clue, index) => ({
+    const parsedClues: Clue[] = useMemo<Clue[]>(() => {
+        return (puzzleData?.body[0].clues ?? []).map((clue: RawClue, index) => ({
             id: index,
             label: clue.label,
-            text: clue.text[0].plain,
-            dir: clue.direction,
+            text: clue.text[0]?.plain ?? "ERROR PARSING CLUE",
+            dir: clue.direction == "Across" ? 0 : 1,
             cells: clue.cells,
             relatives: clue.relatives
         }))
     }, [puzzleData])
 
     // currently selected clue
-    const selectedClues = useMemo(() => {
-        const clue_ids = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clues
-        return { clue_ids, dir: playerState.dir }
+    const selectedClues: SelectedClueData | undefined = useMemo(() => {
+        const clueIds = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clueIds
+        
+        if(clueIds == undefined) return undefined
+
+        return {
+            mainClueId: clueIds[playerState.dir],
+            siblingClueId: clueIds[playerState.dir ^ 1],
+            dir: playerState.dir
+        };
     }, [playerState, puzzleData, gridState])
 
-    function getGridPosByCellIndex(cellIndex) {
-        return [Math.floor(cellIndex / 5), cellIndex % 5]
+
+    function getGridPosByCellIndex(cellIndex: number) {
+        return [Math.floor(cellIndex / 5), cellIndex % 5] as [number, number]
     }
 
-    //  TODO
     // ----------- Render -----------
     return (
         <>
@@ -337,13 +350,18 @@ function Game() {
                     <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} />
 
                 </div>
-                <ClueStack clues={parsedClues} selectedClues={selectedClues} teleport={smartTeleport} />
+                {loggedIn ? (
+                    <ClueStack
+                        clues={parsedClues}
+                        selectedClues={selectedClues}
+                        teleport={smartTeleport} />
+                ) : (
+                    <LoginPage />)}
             </div>
         </>
 
     )
 }
 
-export default Game
 
 

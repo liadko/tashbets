@@ -1,9 +1,16 @@
-import { useEffect, useState } from 'react'
+import { Clue, GridState, PlayerState, SelectedClueData } from '../types/gameTypes';
 import './Grid.css'
-import Cluebar from './Clubar'
 
+interface GridProps {
+    grid: GridState;
+    onCellClick: (row: number, col: number) => void;
+    playerState: PlayerState;
+    clues: Clue[];
+    selectedClues?: SelectedClueData
 
-function Grid({ grid, onCellClick, playerState, clues, selectedClues }) {
+}
+
+export default function Grid({ grid, onCellClick, playerState, clues, selectedClues }: GridProps) {
     // ----------- state -----------
 
 
@@ -12,7 +19,7 @@ function Grid({ grid, onCellClick, playerState, clues, selectedClues }) {
 
     // ----------- Render Utilities -----------
 
-    function getCellClass(row, col) {
+    function getCellClass(row: number, col : number) {
         let classes = "cell "
 
         if (row == playerState.cell[0] && col == playerState.cell[1])
@@ -24,15 +31,15 @@ function Grid({ grid, onCellClick, playerState, clues, selectedClues }) {
         else if (playerState.dir == 1 && col == playerState.cell[1])
             classes += " highlighted"
 
-        const selectedClue_id = clues?.[selectedClues?.clue_ids?.[selectedClues?.dir]]?.id
-        if(selectedClue_id != undefined) {
-            grid[row][col].clues?.forEach((clue_id, index) => {
-                if(clues[clue_id].relatives == selectedClue_id) {
+        const selectedClueId = selectedClues?.mainClueId;
+        if (selectedClueId != undefined) {
+            grid[row][col].clueIds?.forEach((clueId, index) => {
+                if (clues[clueId]?.relatives?.[0] == selectedClueId) {
                     classes += " relative"
                 }
             })
         }
-        
+
 
         return classes
     }
@@ -42,7 +49,7 @@ function Grid({ grid, onCellClick, playerState, clues, selectedClues }) {
         <>
             <div className="grid-wrapper">
                 <div className="grid"
-                    style={{ "--grid-rows": grid.length }}>
+                    style={{ ["--grid-rows" as any]: grid.length }}>
                     {grid.map((rowData, rowId) =>
                         rowData.map((cell, colId) =>
                             <div key={`${rowId}-${colId}`}
@@ -58,7 +65,3 @@ function Grid({ grid, onCellClick, playerState, clues, selectedClues }) {
 
     )
 }
-
-export default Grid
-
-

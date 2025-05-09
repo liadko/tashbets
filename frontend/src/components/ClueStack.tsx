@@ -1,8 +1,14 @@
 import { useEffect } from 'react'
 import './ClueStack.css'
 
+import { SelectedClueData, Clue, GridState } from '../types/gameTypes'
 
-function ClueStack({ clues, selectedClues, teleport }) {
+interface ClueStackProps {
+    clues: Clue[];
+    selectedClues?: SelectedClueData,
+    teleport: (cellPos: [number, number], dir: 0 | 1, grid: GridState | null) => void;
+}
+function ClueStack({ clues, selectedClues, teleport }: ClueStackProps) {
     // ----------- State -----------
 
     // ----------- Render Utilities -----------
@@ -11,33 +17,32 @@ function ClueStack({ clues, selectedClues, teleport }) {
     //     //clues.forEach((clue) => console.log(clue.text))
     // })
 
-    function getClueClass(clue_id) {
+    function getClueClass(clue_id: number) {
+
+        if(!selectedClues) return "clue";
 
         let c = "clue "
-        
-        const selectedClueIndex = selectedClues.dir;
-        const selected_clue_id = selectedClues.clue_ids[selectedClueIndex]
-        if (clue_id === selectedClues.clue_ids[selectedClueIndex])
-            c += "selected "
-        else if (clue_id === selectedClues.clue_ids[selectedClueIndex ^ 1])
-            c += "sibling "
 
-        const relative_id = clues[selected_clue_id].relatives?.[0]
-        if (relative_id && relative_id == clue_id) {
-            c += "relative "
-            //console.log("relative: ", relative_id)
+        if (clue_id === selectedClues.mainClueId) {
+            c += "selected ";
+        } else if (clue_id === selectedClues.siblingClueId) {
+            c += "sibling ";
         }
-
+    
+        const relativeId = clues[selectedClues.mainClueId]?.relatives?.[0];
+        if (relativeId !== undefined && relativeId === clue_id) {
+            c += "relative ";
+        }
+    
 
         return c
     }
 
-    function clueClicked(clue) {
+    function clueClicked(clue: Clue) {
         const initialPosIndex = clue.cells[0]
-        const initialPos = [Math.floor(initialPosIndex / 5), initialPosIndex % 5]
-        const directionNumber = clue.dir == "Across" ? 0 : 1
+        const initialPos = [Math.floor(initialPosIndex / 5), initialPosIndex % 5] as [number, number]
 
-        teleport(initialPos, directionNumber)
+        teleport(initialPos, clue.dir, null)
     }
 
     // ----------- Render -----------
@@ -49,7 +54,7 @@ function ClueStack({ clues, selectedClues, teleport }) {
                     <ol className='clue-list'>
                         {clues.map((clue, id) => {
 
-                            if (clue.dir != "Across") return null;
+                            if (clue.dir != 0) return null;
 
                             return (
                                 <li key={id} className={getClueClass(id)}
@@ -67,7 +72,7 @@ function ClueStack({ clues, selectedClues, teleport }) {
                     <ol className='clue-list'>
                         {clues.map((clue, id) => {
 
-                            if (clue.dir != "Down") return null;
+                            if (clue.dir != 1) return null;
 
                             return (
                                 <li key={id} className={getClueClass(id)}

@@ -2,102 +2,58 @@ package main
 
 import (
 	"fmt"
-	"io"
+	"log"
 	"net/http"
-	"os"
-	"time"
+
+	"github.com/gorilla/websocket"
 )
 
-type Root struct {
-	body []Puzzle `json:"body"`
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-type Puzzle struct {
-	cells []Cell `json:"cells"`
-	clues []Clue `json:"clues"`
+func setupRoutes() {
+	http.HandleFunc("/ws", wsHandler)
 }
 
-type Cell struct {
-	answer string `json:"answer"`
-	label  string `json:"label"`
-}
-
-type Clue struct {
-	cells     []int    `json:"cells"`
-	direction string   `json:"direction"`
-	label     string   `json:"label"`
-	text      ClueText `json:"text"`
-}
-
-type ClueText struct {
-	text string `json:plain`
-}
-
-func downloadDate(date string) error {
-
-	client := &http.Client{}
-
-	url := fmt.Sprintf("https://www.nytimes.com/svc/crosswords/v6/puzzle/mini/%s.json", date)
-
-	req, err := http.NewRequest("GET", url, nil)
-
+func wsHandler(w http.ResponseWriter, r *http.Request) {
+	// Upgrade the HTTP connection to a WebSocket connection
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request to %s: %w", url, err)
+		fmt.Println("Error upgrading:", err)
+		return
 	}
+	defer conn.Close()
 
-	resp, err := client.Do(req)
+	fmt.Println("Client Connected. Waiting For Messages...")
 
-	if err != nil {
-		return fmt.Errorf("failed to send request to %s: %w", url, err)
+	// Listen for incoming messages
+	for {
+		var msg map[string]interface{}
+
+		// Wait for message
+		if err := conn.ReadJSON(&msg); err != nil {
+			log.Println("Read error:", err)
+			break
+		}
+		log.Println("Received from client:", msg)
+
+		// Echo back to client
+		if err := conn.WriteJSON(msg); err != nil {
+			log.Println("Write error:", err)
+			break
+		}
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("server rejected %s with status %d", url, resp.StatusCode)
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-
-	if err != nil {
-		return err
-	}
-
-	filename := fmt.Sprintf("minis/%s.json", date)
-
-	err = os.WriteFile(filename, body, 0644)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Downloaded:", date)
-
-	return nil
 }
 
 func main() {
 
-	for y := 2024; y < 2025; y++ {
-		for m := 12; m <= 12; m++ {
-			for d := 25; d <= 31; d++ {
+	fmt.Println("Starting WebSocket Server on :8080")
 
-				dateTime, err := time.Parse("2006-01-02", fmt.Sprintf("%04d-%02d-%02d", y, m, d))
-				if err != nil {
-					// it's not a date
-					continue
-				}
+	setupRoutes()
 
-				date := dateTime.Format("2006-01-02")
-
-				err = downloadDate(date)
-
-				if err != nil {
-					fmt.Printf("Error On Date %s: %s\n", date, err.Error())
-				}
-
-			}
-		}
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println("Error starting server:", err)
 	}
-
 }

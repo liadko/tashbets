@@ -1,24 +1,27 @@
+import { Clue, SelectedClueData } from '../types/gameTypes';
 import './Cluebar.css'
 
-
-function Cluebar({clues, selectedClues}) {
+interface CluebarProps {
+    clues: Clue[];
+    selectedClues?: SelectedClueData;
+}
+export default function Cluebar({clues, selectedClues} : CluebarProps) {
     // ----------- State -----------
 
     // ----------- Render Utilities -----------
 
     function getLabel() {
-        if(!clues.length) return
+        if(!clues.length || !selectedClues) return "SMH"
 
         const dir = selectedClues.dir
-        const clue = clues[selectedClues.clue_ids[dir]]
+        const clue = clues[selectedClues.mainClueId]
 
-        return clue.label.toString() + (dir == "Across" ? "A" : "D")
+        return clue.label.toString() + (dir == 0 ? "A" : "D")
     }
     function getClueText() {
-        if(!clues.length) return
+        if(!clues.length || !selectedClues) return "No Clue! (Ha)"
 
-        const dir = selectedClues.dir
-        const clue = clues[selectedClues.clue_ids[dir]]
+        const clue = clues[selectedClues.mainClueId]
 
         return clue.text
     }
@@ -34,6 +37,5 @@ function Cluebar({clues, selectedClues}) {
     )
 }
 
-export default Cluebar
 
 
