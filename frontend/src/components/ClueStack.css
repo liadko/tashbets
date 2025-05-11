@@ -1,11 +1,13 @@
 .clue-stack {
     height: 100%;
-    width: 48%;
+    width: 40%;
 
 
     display: flex;
     flex-direction: column;
 
+
+    font-size: 1rem;
 }
 
 
@@ -24,9 +26,10 @@
 
 .clue-list-title {
     
-    font-size: 1.2rem;
+    font-size: 1.2em;
     font-weight: bold;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.5em;
+    margin-top: 0;
     color: black;
 }
 
@@ -69,7 +72,7 @@
     margin-right: auto;
     flex: 1;
     top: 50%;
-    font-size: 1.1em;
+    font-size: 0.9em;
     font-weight: 400;
     text-align: left;
 }

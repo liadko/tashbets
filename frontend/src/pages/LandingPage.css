@@ -1,0 +1,169 @@
+.page-container {
+    display: flex;
+    flex-direction: column; /* vertical stack */
+    align-items: center;
+    padding: 10px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: black;
+}
+h1 {
+    margin: 0px;
+    font-size: 3.2em;
+}
+p {
+    text-align: right;
+    font-size: 1.7em;
+    margin: 0px;
+    margin-top: -10px;
+}
+
+
+.landing-main-area {
+    display: flex; /* side by side */
+    gap: 40px;
+    justify-content: space-between;
+    align-items: flex-start;
+    
+    align-items: stretch;
+}
+
+
+
+.landing-grid-wrapper {
+    min-width: 350px;
+
+    width: 100%;
+    aspect-ratio: 1;
+    /* size depends on your grid component */
+}
+
+
+.landing-clue-bar {
+    display: flex;
+    width: 100%;
+    height: 45px;
+    background-color: #DCEFFF;
+    color: black;
+    margin-bottom: 10px;
+}
+
+.landing-cluebar-label {
+    height: 100%;
+    aspect-ratio: 1;
+    font-size: 1.2em;
+    font-weight: 700;
+    align-content: center;
+}
+
+.landing-cluebar-text {
+    height: 100%;
+    margin-right: auto;
+    align-content: center;
+    font-size: 1.1em;
+    font-weight: 400;
+    text-align: left;
+}
+
+
+/* Grid */
+
+
+.landing-grid {
+    --grid-rows: 5;
+    display: grid;
+    box-sizing: border-box;
+
+    width: 100%;
+    height: 100%;
+
+    grid-template-columns: repeat(var(--grid-rows), 1fr);
+    grid-template-rows: repeat(var(--grid-rows), 1fr);
+
+    justify-content: center;
+    border: 2.5px solid black;
+
+    font-size: clamp(8px, 2.5vmin, 20px);
+}
+
+.landing-cell {
+    position: relative;
+    border: 0.5px solid rgb(70, 70, 70);
+    background-color: #FFFFFF;
+
+    width: 100%;
+}
+
+
+/* Controls */
+
+.landing-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 170px;
+    justify-content: flex-end;
+
+
+
+}
+
+.landing-controls > * {
+    padding: 7px;
+    font-size: 16px;
+    
+    font-weight: bold;
+}
+
+.landing-name-input {
+
+    padding: 0px;
+    margin-bottom: auto;
+    background-color: #F3F3F3;
+    text-align: center;
+
+    color: black;
+
+    height: 45px;
+}
+
+
+.landing-name-input:focus::placeholder {
+    
+}
+
+.landing-code-input {
+    padding: 8px;
+    background-color: #F3F3F3;
+    text-align: center;
+    color: black;
+
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.landing-join-button,
+.landing-create-button {
+
+    cursor: pointer;
+    border: none;
+    color: black;
+    
+    font-size: 16px;
+}
+
+.landing-join-button {
+    background-color: black;
+    color: white;
+    margin-bottom: 40px;
+}
+
+.landing-create-button {
+    background-color: white;
+    border: 1px solid black;
+
+    margin-bottom:0px;
+}

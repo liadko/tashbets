@@ -1,10 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import './Game.css'
-import Cluebar from './Clubar'
-import Grid from './Grid'
-import ClueStack from './ClueStack'
-import LoginPage from './LoginPage'
-import { useWebSocket } from './useWebSocket'
+import Cluebar from '../components/Clubar'
+import Grid from '../components/Grid'
+import ClueStack from '../components/ClueStack'
+import { useWebSocket } from '../components/useWebSocket'
 
 import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState } from '../types/gameTypes'
 
@@ -47,7 +46,7 @@ export default function Game() {
     useEffect(() => {
         fetch("2024-12-26.json")
             .then((res) => res.json())
-            .then((data : RawPuzzleData) => {
+            .then((data: RawPuzzleData) => {
                 setPuzzleData(data)
                 const newGrid = createGrid(data?.body[0].cells ?? null)
                 setGrid(newGrid)
@@ -127,10 +126,10 @@ export default function Game() {
                 const currentIndex = selectedClues.mainClueId;
                 const nextClueIndex = (currentIndex + 1) % parsedClues.length;
                 const nextClue = parsedClues[nextClueIndex];
-            
+
                 const clueFirstCellIndex = nextClue.cells[0];
                 smartTeleport(getGridPosByCellIndex(clueFirstCellIndex), nextClue.dir, gridState);
-            
+
             }
 
         }
@@ -326,8 +325,8 @@ export default function Game() {
     // currently selected clue
     const selectedClues: SelectedClueData | undefined = useMemo(() => {
         const clueIds = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clueIds
-        
-        if(clueIds == undefined) return undefined
+
+        if (clueIds == undefined) return undefined
 
         return {
             mainClueId: clueIds[playerState.dir],
@@ -344,19 +343,34 @@ export default function Game() {
     // ----------- Render -----------
     return (
         <>
-            <div className="container">
-                <div className="puzzle-area">
-                    <Cluebar clues={parsedClues} selectedClues={selectedClues} />
-                    <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} />
+            <div className='game-container'>
+                <div className="navbar">
+                    <img src="/close.svg" className="close-button" alt="Close" />
+
+                    <div className="room-code" onClick={() => navigator.clipboard.writeText("FSAW")}>
+                        ROOM: <span>FSAW</span>
+                        <img src="/copy.svg" className="copy-icon" alt="Copy" />
+                    </div>
+                </div>
+
+                <div className="player-side">
+                    <div className='grid-cluestack'>
+
+                        <div className="puzzle-area">
+                            <Cluebar clues={parsedClues} selectedClues={selectedClues} />
+                            <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} />
+
+                        </div>
+                        <ClueStack
+                            clues={parsedClues}
+                            selectedClues={selectedClues}
+                            teleport={smartTeleport} />
+
+                    </div>
+                </div>
+                <div className='enemy-side'>
 
                 </div>
-                {loggedIn ? (
-                    <ClueStack
-                        clues={parsedClues}
-                        selectedClues={selectedClues}
-                        teleport={smartTeleport} />
-                ) : (
-                    <LoginPage />)}
             </div>
         </>
 
