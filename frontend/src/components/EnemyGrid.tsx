@@ -1,39 +1,50 @@
 import './EnemyGrid.css'
 
+import { GridState, EnemyState } from '../types/gameTypes'
+import {getCell, getGridPosByCellIndex } from '../utils/gridUtils'
 
-// export default function EnemyGrid({ enemyState }) {
-//     // ----------- state -----------
+interface EnemyGridProps {
+    grid: GridState;
+    enemyState: EnemyState;
+}
+
+export default function EnemyGrid({ grid, enemyState }: EnemyGridProps) {
+    // ----------- Render Utilities -----------
+
+    function getCellClass(cellIndex: number) {
+        let classes = "enemy-cell "
 
 
-//     // ----------- Effects -----------
+        if(getCell(getGridPosByCellIndex(cellIndex), grid).isBlock)
+            classes += "blocked "
+        else if (enemyState.selectedCellIndex == cellIndex)
+            classes += "selected "
 
+        else if (enemyState?.filledCells[cellIndex])
+            classes += "filled "
 
-//     // ----------- Render Utilities -----------
+        return classes
+    }
 
-//     function getCellClass(row, col) {
-//         let classes = "cell "
+    // ----------- Render -----------
+    return (
+        <>
+            <div className="enemy-grid-wrapper">
+                <div className='enemy-info'>
+                    <span className='enemy-name'>TOMER</span>
+                    <span className='enemy-text'>READY</span>
+                </div>
+                <div className="grid"
+                    style={{ ["--grid-rows" as any]: grid.length }}>
+                    {
+                        enemyState.filledCells.map((cell, cellId) =>
+                            <div key={`${cellId}`}
+                                className={getCellClass(cellId)}>
+                            </div>)
+                    }
+                </div>
+            </div>
+        </>
 
-        
-
-//         return classes
-//     }
-
-//     // ----------- Render -----------
-//     return (
-//         <>
-//             <div className="grid-wrapper">
-//                 <div className="grid"
-//                     style={{ "--grid-rows": 5 }}>
-//                     {enemyState.grid.map((rowData, rowId) =>
-//                         rowData.map((cell, colId) =>
-//                             <div key={`${rowId}-${colId}`}
-//                                 className={getCellClass(rowId, colId)}>
-//                                 <span className="letter">{cell.guess}</span>
-//                             </div>))
-//                     }
-//                 </div>
-//             </div>
-//         </>
-
-//     )
-// }
+    )
+}

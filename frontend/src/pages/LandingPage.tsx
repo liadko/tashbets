@@ -1,5 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import './LandingPage.css'
+import { useNavigate } from 'react-router-dom';
+
+
 
 export default function LandingPage() {
     // ----------- constants -----------
@@ -17,7 +20,7 @@ export default function LandingPage() {
     //     const message = { type: 'guess', cell: [1, 2], letter: 'A' }
     //     sendMessage(message)
     // }
-
+    const navigate = useNavigate();
     // ----------- Effects -----------
 
     // ----------- Render -----------
@@ -74,7 +77,7 @@ export default function LandingPage() {
                         
                         <input type="text" className="landing-code-input" placeholder="ROOM CODE" spellCheck="false" maxLength={4}/>
 
-                        <button className="landing-join-button">JOIN ROOM</button>
+                        <button className="landing-join-button" onClick={()=>navigate("/game")}>JOIN ROOM</button>
 
                         <button className="landing-create-button">CREATE ROOM</button>
                     </div>

@@ -6,7 +6,7 @@ import { SelectedClueData, Clue, GridState } from '../types/gameTypes'
 interface ClueStackProps {
     clues: Clue[];
     selectedClues?: SelectedClueData,
-    teleport: (cellPos: [number, number], dir: 0 | 1, grid: GridState | null) => void;
+    teleport: (cellPos: [number, number], dir: 0 | 1, grid?: GridState) => void;
 }
 function ClueStack({ clues, selectedClues, teleport }: ClueStackProps) {
     // ----------- State -----------
@@ -42,7 +42,7 @@ function ClueStack({ clues, selectedClues, teleport }: ClueStackProps) {
         const initialPosIndex = clue.cells[0]
         const initialPos = [Math.floor(initialPosIndex / 5), initialPosIndex % 5] as [number, number]
 
-        teleport(initialPos, clue.dir, null)
+        teleport(initialPos, clue.dir)
     }
 
     // ----------- Render -----------

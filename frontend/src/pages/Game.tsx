@@ -2,10 +2,16 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import './Game.css'
 import Cluebar from '../components/Clubar'
 import Grid from '../components/Grid'
+import EnemyGrid from '../components/EnemyGrid'
 import ClueStack from '../components/ClueStack'
-import { useWebSocket } from '../components/useWebSocket'
+import { useWebSocket } from '../hooks/useWebSocket'
+import { usePlayerState } from '../hooks/usePlayerState'
+import { useNavigate } from 'react-router-dom';
 
-import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState } from '../types/gameTypes'
+
+import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, EnemyState } from '../types/gameTypes'
+import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex } from '../utils/gridUtils'
+import { smartTeleport } from '../utils/playerUtils'
 
 export default function Game() {
     // ----------- constants -----------
@@ -13,6 +19,17 @@ export default function Game() {
     const initialPlayerState: PlayerState = {
         cell: [-1, -1],
         dir: 0,  // 0 = horizontal, 1 = vertical
+    }
+
+    const tempEnemyState: EnemyState = {
+        filledCells: [
+            false, false, false, false, false, 
+            false, false, false, false, false, 
+            true, true, true, true, false, 
+            false, false, false, false, false, 
+            false, false, false, false, false, 
+        ],
+        selectedCellIndex: 10
     }
     const gridSize = 5
 
@@ -22,11 +39,15 @@ export default function Game() {
 
     // ----------- player state -----------
     const [loggedIn, setLoggedIn] = useState(true)
-    const [playerState, setPlayerState] = useState<PlayerState>(initialPlayerState)
+    const { playerState, setDir, setCell } = usePlayerState(initialPlayerState)
+    const [isReady, setReady] = useState<boolean>(false)
 
+    // ----------- site state -----------
+    const navigate = useNavigate()
 
 
     // ----------- Networking -----------
+    const [enemyState, setEnemyState] = useState<EnemyState>(tempEnemyState)
 
     // const { sendMessage } = useWebSocket('ws://localhost:8080/ws', useCallback((msg) => {
     //     console.log("Server Message: ", msg)
@@ -82,7 +103,7 @@ export default function Game() {
                 if (arrowDirection != playerState.dir) setDir(arrowDirection as 0 | 1)
 
                 // moving with direction
-                else setCell(movedSelected(arrowDirection, specificArrow))
+                else setCell(moveSelected(arrowDirection, specificArrow, playerState, gridState))
             }
 
             // letter input
@@ -90,9 +111,9 @@ export default function Game() {
                 const char = event.key.toUpperCase()
                 //if (char != getCell(playerState.cell, gridState).guess) handleSend()
 
-                editGuess(playerState.cell, char)
+                setGrid(prev => editGuess(prev, playerState.cell, char))
 
-                const nextPosition = movedSelected(playerState.dir, 1)
+                const nextPosition = moveSelected(playerState.dir, 1, playerState, gridState)
                 if (nextPosition[0] == playerState.cell[0] &&
                     nextPosition[1] == playerState.cell[1]) {
                     const teleportLocation = getFirstEmptyCellPos(
@@ -108,12 +129,12 @@ export default function Game() {
             else if (event.key == "Backspace") {
                 // erasing self
                 if (getCell(playerState.cell, gridState).guess?.length) {
-                    editGuess(playerState.cell, "")
+                    setGrid(prev => editGuess(prev, playerState.cell, ""))
                 }
                 // erasing behind
                 else {
-                    const newCell = movedSelected(playerState.dir, -1)
-                    editGuess(newCell, "")
+                    const newCell = moveSelected(playerState.dir, -1, playerState, gridState)
+                    setGrid(prev => editGuess(prev, newCell, ""))
                     setCell(newCell)
                 }
 
@@ -146,148 +167,17 @@ export default function Game() {
     function startGame(grid: GridState) {
         // const firstCell = getValidCell(grid)
         // setCell(firstCell)
-        smartTeleport([0, 0], 0, grid)
+        handleTeleport([0, 0], 0, grid)
+        
     }
 
-    // Player State Functions
-    function setDir(newDir: 0 | 1) {
+    function handleTeleport(initialCellPos: [number, number], dir: 0 | 1, grid?: GridState) {
+        if(grid === undefined) grid = gridState
 
-        setPlayerState((prev) => ({
-            ...prev,
-            dir: newDir
-        }))
-    }
-    function setCell(newCell: [number, number]) {
-        setPlayerState((prev) => ({
-            ...prev,
-            cell: newCell
-        }))
-    }
-    // gets cell and direction. moves selection to nearest empty cell.
-    // if line is full goes to the initially requested cell
-    //initialCellPos = [int, int] , dir = 0 or 1 
-    function smartTeleport(initialCellPos: [number, number], dir: 0 | 1, grid: GridState | null) {
+        const { newCell, newDir } = smartTeleport(initialCellPos, dir, grid)
 
-        if (grid === null) grid = gridState
-
-
-        const moveDirection = dir ^ 1
-        let currentCellPos = [...initialCellPos] as [number, number]
-        let currentCell = getCell(initialCellPos, grid)
-        while (currentCell.isBlock || currentCell.guess != "") {
-            currentCellPos[moveDirection]++
-
-            if (currentCellPos[moveDirection] >= gridSize) {
-                currentCellPos = initialCellPos
-                break
-            }
-
-            currentCell = getCell(currentCellPos, grid)
-        }
-
-        setPlayerState((prev) => ({
-            ...prev,
-            cell: currentCellPos
-        }))
-
-        setDir(dir)
-    }
-
-    // Grid functions 
-    function createGrid(rawCells: RawCell[] | null): GridState {
-        const size = 5//Math.sqrt(rawAnswers.length)
-        const grid: GridState = []
-
-        const validGrid = !!rawCells
-
-
-        for (let row = 0; row < size; row++) {
-            const rowData = []
-
-            for (let col = 0; col < size; col++) {
-                const cellIndex = row * size + col
-                const rawCell = rawCells?.[cellIndex]
-
-                const isBlock = (rawCell?.answer) == undefined
-
-                const answer = rawCell?.answer
-                const label = rawCell?.label
-                const clueIds = rawCell?.clues
-
-                const cell: Cell = {
-                    row,
-                    col,
-
-                    guess: "",
-                    answer,
-                    isBlock,
-                    label,
-                    clueIds,
-                };
-
-                rowData.push(cell)
-            }
-
-            grid.push(rowData)
-        }
-
-        return grid
-    }
-
-    function editGuess(cellPos: [number, number], newGuess: string) {
-        const [row, col] = cellPos
-
-        setGrid((prev) => prev.map((rowData, r) =>
-            rowData.map((cell, c) => {
-                if (r === row && c === col) {
-                    return {
-                        ...cell,
-                        guess: newGuess,
-                    }
-                }
-                else
-                    return cell
-            })
-        )
-        )
-    }
-    function getCell(cellPos: [number, number], grid: GridState): Cell {
-        if (!Array.isArray(cellPos) || cellPos.length != 2) {
-            throw new Error(`Invalid cell: ${cellPos}`)
-        }
-
-        return grid[cellPos[0]][cellPos[1]]
-    }
-
-    // returns undefined if doesn't exist
-    function getFirstEmptyCellPos(positionIndex: number, dir: 0 | 1, grid: GridState): [number, number] | undefined {
-
-        for (let i = 0; i < 5; i++) {
-            if (dir == 0 && grid[positionIndex][i].guess == "" && !grid[positionIndex][i].isBlock) {
-                return [positionIndex, i]
-            }
-            else if (dir == 1 && grid[i][positionIndex].guess == "" && !grid[i][positionIndex].isBlock) {
-                return [i, positionIndex]
-            }
-        }
-
-        return undefined
-
-    }
-    // assumes live gridState
-    function movedSelected(direction: 0 | 1, move: -1 | 1): [number, number] {
-        const movementAxis = direction ^ 1
-        const updatedCell = [...playerState.cell] as [number, number]
-
-        updatedCell[movementAxis] += move
-
-        // check if current cell is invalid, if so, trace back the movement
-        if (updatedCell[movementAxis] < 0 || updatedCell[movementAxis] >= gridSize
-            || gridState[updatedCell[0]][updatedCell[1]].isBlock)
-            updatedCell[movementAxis] -= move
-
-        return updatedCell
-
+        setCell(newCell)
+        setDir(newDir)
     }
 
     // assumes live gridState
@@ -311,7 +201,7 @@ export default function Game() {
 
     // Clue functions
 
-    const parsedClues: Clue[] = useMemo<Clue[]>(() => {
+    const parsedClues = useMemo<Clue[]>(() => {
         return (puzzleData?.body[0].clues ?? []).map((clue: RawClue, index) => ({
             id: index,
             label: clue.label,
@@ -323,7 +213,7 @@ export default function Game() {
     }, [puzzleData])
 
     // currently selected clue
-    const selectedClues: SelectedClueData | undefined = useMemo(() => {
+    const selectedClues = useMemo<SelectedClueData | undefined>(() => {
         const clueIds = gridState?.[playerState.cell[0]]?.[playerState.cell[1]]?.clueIds
 
         if (clueIds == undefined) return undefined
@@ -336,40 +226,53 @@ export default function Game() {
     }, [playerState, puzzleData, gridState])
 
 
-    function getGridPosByCellIndex(cellIndex: number) {
-        return [Math.floor(cellIndex / 5), cellIndex % 5] as [number, number]
-    }
-
     // ----------- Render -----------
     return (
         <>
             <div className='game-container'>
                 <div className="navbar">
-                    <img src="/close.svg" className="close-button" alt="Close" />
+                    <img src="/close.svg" className="close-button" alt="Close"
+                        onClick={() => navigate("/")} />
 
                     <div className="room-code" onClick={() => navigator.clipboard.writeText("FSAW")}>
                         ROOM: <span>FSAW</span>
-                        <img src="/copy.svg" className="copy-icon" alt="Copy" />
+                        <img src="/copy-paste.svg" className="copy-icon" alt="Copy" />
                     </div>
                 </div>
 
                 <div className="player-side">
                     <div className='grid-cluestack'>
 
+
+
                         <div className="puzzle-area">
+                            <div className="info-bar">
+                                <span className='nametag'>Liad</span>
+                                <span className='timer'>00:00</span>
+                            </div>
                             <Cluebar clues={parsedClues} selectedClues={selectedClues} />
                             <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} />
 
                         </div>
-                        <ClueStack
-                            clues={parsedClues}
-                            selectedClues={selectedClues}
-                            teleport={smartTeleport} />
+                        <div className='cluestack-wrapper blurred'>
+
+                            <ClueStack
+                                clues={parsedClues}
+                                selectedClues={selectedClues}
+                                teleport={handleTeleport} />
+
+                            <div className='cluestack-overlay'>
+                                <button className='ready-button'>READY</button>
+                            </div>
+
+
+                        </div>
 
                     </div>
                 </div>
                 <div className='enemy-side'>
-
+                    <EnemyGrid grid={gridState} enemyState={enemyState}/>
+                    <EnemyGrid grid={gridState} enemyState={enemyState}/>
                 </div>
             </div>
         </>
