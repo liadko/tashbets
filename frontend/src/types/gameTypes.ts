@@ -57,10 +57,10 @@ export interface PlayerState {
 
 // --------- Enemy ---------
 export interface EnemyState {
+    filledCells: boolean[]; // length 25 i hope
 
-}
+    selectedCellIndex: number
 
-export interface EnemyGrid {
 
 
 }
