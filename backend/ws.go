@@ -24,6 +24,8 @@ func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		send: make(chan map[string]any, 256),
 	}
 
+	log.Println("Initializing Player with id:", player.id)
+
 	go player.WritePump()
 	go player.ReadPump()
 }

@@ -12,6 +12,7 @@ func HandleMessage(p *Player, msg map[string]any) {
 
 	switch msgType {
 	case "create_room":
+
 		name, _ := msg["name"].(string)
 		p.name = name
 
@@ -27,5 +28,10 @@ func HandleMessage(p *Player, msg map[string]any) {
 				{"id": p.id, "name": p.name},
 			},
 		}
+
+	default:
+		log.Printf("Unhandled message type: %s from player %s", msgType, p.id)
+
 	}
+
 }

@@ -1,28 +1,50 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback, useContext } from 'react'
 import './LandingPage.css'
 import { useNavigate } from 'react-router-dom';
+import { useSession } from '../context/SessionContext'
 
-
-
-export default function LandingPage() {
+type LandingProps = {
+    sendMessage: (msg: any) => void;
+    setMessageHandler: (fn: (msg: any) => void) => void;
+};
+export default function LandingPage({ sendMessage, setMessageHandler }: LandingProps) {
     // ----------- constants -----------
+    const navigate = useNavigate()
+    const codeRef = useRef<HTMLInputElement>(null)
+    const nameRef = useRef<HTMLInputElement>(null)
+    const { name, setName, setRoomCode } = useSession()
+
+
 
     // ----------- Networking -----------
+    const handleCreate = () => {
+        const name = nameRef.current?.value.trim();
 
-    // const { sendMessage } = useWebSocket('ws://localhost:8080/ws', useCallback((msg) => {
-    //     console.log("Server Message: ", msg)
-    //     // your handling logic
-    // }, [])
-    // )
+        if (!name) {
+            alert("Please Enter Your Name");
+            return;
+        }
 
-    // const handleSend = () => {
-    //     console.log("Sending Message")
-    //     const message = { type: 'guess', cell: [1, 2], letter: 'A' }
-    //     sendMessage(message)
-    // }
-    const navigate = useNavigate();
+        setName(name)
+
+        sendMessage({
+            "type": "create_room",
+            "name": name
+        })
+    }
+
     // ----------- Effects -----------
+    useEffect(() => {
+        setMessageHandler((msg) => {
+            if (msg.type === "room_created") {
+                console.log("Room created with code:", msg.room_code)
+                setRoomCode(msg.room_code)
 
+                navigate("/game")
+            }
+        })
+    }, [setMessageHandler])
+    
     // ----------- Render -----------
     return (
         <>
@@ -72,14 +94,14 @@ export default function LandingPage() {
                     </div>
 
                     <div className="landing-controls">
-                        <input type="text" className="landing-name-input" placeholder="YOUR NAME" spellCheck="false"/>
-                        
-                        
-                        <input type="text" className="landing-code-input" placeholder="ROOM CODE" spellCheck="false" maxLength={4}/>
+                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" />
 
-                        <button className="landing-join-button" onClick={()=>navigate("/game")}>JOIN ROOM</button>
 
-                        <button className="landing-create-button">CREATE ROOM</button>
+                        <input type="text" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />
+
+                        <button className="landing-join-button" onClick={() => navigate("/game")}>JOIN ROOM</button>
+
+                        <button className="landing-create-button" onClick={handleCreate}>CREATE ROOM</button>
                     </div>
 
                 </div>

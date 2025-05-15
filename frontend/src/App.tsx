@@ -1,18 +1,25 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from "./pages/LandingPage"
 import Game from "./pages/Game"
+import { useWebSocket } from './hooks/useWebSocket';
+import { useCallback } from 'react';
 import './App.css'
+import { SessionProvider } from './context/SessionContext';
 
 function App() {
 
-    return <>
+    const { sendMessage, setMessageHandler: setHandler } = useWebSocket('ws://localhost:8080/ws')
 
-        <Router>
-            <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/game" element={<Game />} />
-            </Routes>
-        </Router>
+
+    return <>
+        <SessionProvider>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<LandingPage sendMessage={sendMessage} setMessageHandler={setHandler} />} />
+                    <Route path="/game" element={<Game />} />
+                </Routes>
+            </Router>
+        </SessionProvider>
 
     </>
 }

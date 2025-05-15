@@ -7,6 +7,8 @@ import ClueStack from '../components/ClueStack'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { usePlayerState } from '../hooks/usePlayerState'
 import { useNavigate } from 'react-router-dom';
+import { useSession } from '../context/SessionContext'
+
 
 
 import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, EnemyState } from '../types/gameTypes'
@@ -41,6 +43,7 @@ export default function Game() {
     const [loggedIn, setLoggedIn] = useState(true)
     const { playerState, setDir, setCell } = usePlayerState(initialPlayerState)
     const [isReady, setReady] = useState<boolean>(false)
+    const {name, roomCode} = useSession();
 
     // ----------- site state -----------
     const navigate = useNavigate()
@@ -49,11 +52,7 @@ export default function Game() {
     // ----------- Networking -----------
     const [enemyState, setEnemyState] = useState<EnemyState>(tempEnemyState)
 
-    // const { sendMessage } = useWebSocket('ws://localhost:8080/ws', useCallback((msg) => {
-    //     console.log("Server Message: ", msg)
-    //     // your handling logic
-    // }, [])
-    // )
+    
 
     // const handleSend = () => {
     //     console.log("Sending Message")
@@ -234,8 +233,8 @@ export default function Game() {
                     <img src="/close.svg" className="close-button" alt="Close"
                         onClick={() => navigate("/")} />
 
-                    <div className="room-code" onClick={() => navigator.clipboard.writeText("FSAW")}>
-                        ROOM: <span>FSAW</span>
+                    <div className="room-code" onClick={() => navigator.clipboard.writeText(roomCode)}>
+                        ROOM: <span>{roomCode}</span>
                         <img src="/copy-paste.svg" className="copy-icon" alt="Copy" />
                     </div>
                 </div>
@@ -247,7 +246,7 @@ export default function Game() {
 
                         <div className="puzzle-area">
                             <div className="info-bar">
-                                <span className='nametag'>Liad</span>
+                                <span className='nametag'>{name}</span>
                                 <span className='timer'>00:00</span>
                             </div>
                             <Cluebar clues={parsedClues} selectedClues={selectedClues} />
