@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../context/SessionContext'
 
 type LandingProps = {
-    sendMessage: (msg: any) => void;
+    sendMessage: (msg: any) => boolean;
     setMessageHandler: (fn: (msg: any) => void) => void;
 };
 export default function LandingPage({ sendMessage, setMessageHandler }: LandingProps) {
@@ -12,12 +12,12 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
     const navigate = useNavigate()
     const codeRef = useRef<HTMLInputElement>(null)
     const nameRef = useRef<HTMLInputElement>(null)
-    const { name, setName, setRoomCode } = useSession()
+    const { setName, setRoomCode } = useSession()
 
 
 
     // ----------- Networking -----------
-    const handleCreate = () => {
+    function handleCreate() {
         const name = nameRef.current?.value.trim();
 
         if (!name) {
@@ -27,9 +27,34 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
 
         setName(name)
 
-        sendMessage({
+        const success = sendMessage({
             "type": "create_room",
             "name": name
+        })
+        if(!success)
+            console.log("TOAST: server unavailable")
+
+    }
+    function handleJoin() {
+        const code = codeRef.current?.value.trim().toUpperCase();
+        const name = nameRef.current?.value.trim();
+
+        if (!name) {
+            alert("Please Enter Your Name");
+            return;
+        }
+
+        if (!code) {
+            alert("Please Enter Room Code");
+            return;
+        }
+
+        setName(name)
+
+        sendMessage({
+            "type": "join_room",
+            "name": name,
+            "code": code
         })
     }
 
@@ -42,9 +67,22 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
 
                 navigate("/game")
             }
+            else if (msg.type === "room_joined") {
+                console.log("Room joined with code:", msg.room_code)
+                setRoomCode(msg.room_code)
+
+                navigate("/game")
+            }
+            else if (msg.type === "room_invalid") {
+                console.log("Room not found")
+                
+
+            }
+            else 
+                console.log("Unrecognised message from server, type:", msg.type)
         })
     }, [setMessageHandler])
-    
+
     // ----------- Render -----------
     return (
         <>
@@ -61,7 +99,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                     <div className="landing-grid-wrapper">
                         <div className="landing-clue-bar">
                             <span className="landing-cluebar-label">1A</span>
-                            <span className="landing-cluebar-text">Have fun</span>
+                            <span className="landing-cluebar-text">Inspired By NYT Mini Crossword</span>
                         </div>
                         <div className='landing-grid'>
                             <div className="landing-cell"></div>
@@ -94,12 +132,12 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                     </div>
 
                     <div className="landing-controls">
-                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" />
+                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue="Liad"/>
 
 
                         <input type="text" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />
 
-                        <button className="landing-join-button" onClick={() => navigate("/game")}>JOIN ROOM</button>
+                        <button className="landing-join-button" onClick={handleJoin}>JOIN ROOM</button>
 
                         <button className="landing-create-button" onClick={handleCreate}>CREATE ROOM</button>
                     </div>
