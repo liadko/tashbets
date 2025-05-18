@@ -22,7 +22,9 @@ func NewPlayer(id, name string, conn *websocket.Conn, room *Room) *Player {
 
 func (p *Player) ReadPump() {
 	defer func() {
-		p.room.RemovePlayer(p.id)
+		if p.room != nil {
+			p.room.RemovePlayer(p.id)
+		}
 		p.conn.Close()
 		close(p.send)
 	}()
@@ -32,7 +34,6 @@ func (p *Player) ReadPump() {
 		if err := p.conn.ReadJSON(&msg); err != nil {
 			break
 		}
-
 		HandleMessage(p, msg)
 	}
 }

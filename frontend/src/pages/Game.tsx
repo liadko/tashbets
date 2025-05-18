@@ -25,11 +25,11 @@ export default function Game() {
 
     const tempEnemyState: EnemyState = {
         filledCells: [
-            false, false, false, false, false, 
-            false, false, false, false, false, 
-            true, true, true, true, false, 
-            false, false, false, false, false, 
-            false, false, false, false, false, 
+            false, false, false, false, false,
+            false, false, false, false, false,
+            true, true, true, true, false,
+            false, false, false, false, false,
+            false, false, false, false, false,
         ],
         selectedCellIndex: 10
     }
@@ -43,16 +43,16 @@ export default function Game() {
     const [loggedIn, setLoggedIn] = useState(true)
     const { playerState, setDir, setCell } = usePlayerState(initialPlayerState)
     const [isReady, setReady] = useState<boolean>(false)
-    const {name, roomCode} = useSession();
-
+    
     // ----------- site state -----------
     const navigate = useNavigate()
+    const { name, roomCode } = useSession();
 
 
     // ----------- Networking -----------
     const [enemyState, setEnemyState] = useState<EnemyState>(tempEnemyState)
 
-    
+
 
     // const handleSend = () => {
     //     console.log("Sending Message")
@@ -161,17 +161,27 @@ export default function Game() {
         }
     }, [gridState, playerState])
 
+    // kicks to landing page
+    useEffect(() => {
+        if (!name || !roomCode) {
+            navigate('/');
+        }
+    }, [name, roomCode, navigate]);
 
     // Game Logic
     function startGame(grid: GridState) {
         // const firstCell = getValidCell(grid)
         // setCell(firstCell)
         handleTeleport([0, 0], 0, grid)
-        
+
+    }
+
+    function readyClick() {
+        setReady(prev => !prev)
     }
 
     function handleTeleport(initialCellPos: [number, number], dir: 0 | 1, grid?: GridState) {
-        if(grid === undefined) grid = gridState
+        if (grid === undefined) grid = gridState
 
         const { newCell, newDir } = smartTeleport(initialCellPos, dir, grid)
 
@@ -243,7 +253,6 @@ export default function Game() {
                     <div className='grid-cluestack'>
 
 
-
                         <div className="puzzle-area">
                             <div className="info-bar">
                                 <span className='nametag'>{name}</span>
@@ -261,7 +270,7 @@ export default function Game() {
                                 teleport={handleTeleport} />
 
                             <div className='cluestack-overlay'>
-                                <button className='ready-button'>READY</button>
+                                <button className={"ready-button" + ( isReady ? " filled" : "")} onClick={readyClick}>READY</button>
                             </div>
 
 
@@ -270,8 +279,8 @@ export default function Game() {
                     </div>
                 </div>
                 <div className='enemy-side'>
-                    <EnemyGrid grid={gridState} enemyState={enemyState}/>
-                    <EnemyGrid grid={gridState} enemyState={enemyState}/>
+                    <EnemyGrid grid={gridState} enemyState={enemyState} />
+                    <EnemyGrid grid={gridState} enemyState={enemyState} />
                 </div>
             </div>
         </>
