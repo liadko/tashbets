@@ -191,15 +191,14 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
 
             // enter - skip clue
             else if (event.key == "Enter") {
-                if (!puzzleData || !selectedClues) return
+                if (!selectedClues) return
 
                 const currentIndex = selectedClues.mainClueId;
                 const nextClueIndex = (currentIndex + 1) % parsedClues.length;
                 const nextClue = parsedClues[nextClueIndex];
 
                 const clueFirstCellIndex = nextClue.cells[0];
-                smartTeleport(getGridPosByCellIndex(clueFirstCellIndex), nextClue.dir, gridState);
-
+                handleTeleport(getGridPosByCellIndex(clueFirstCellIndex), nextClue.dir, gridState)
             }
 
         }

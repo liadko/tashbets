@@ -25,17 +25,18 @@
     background-color: #FFFFFF;
 
     width: 100%;
-    
+    box-sizing: border-box;
     font-size: clamp(18px, 8vw / var(--grid-rows), 24px);;
 }
 
 .cell.blocked {
     background-color: #000000;
 
+
 }
 .cell.selected {
-    background-color: #FFDA00;
-
+    border-width: 0.2em;
+    z-index: 1;
 }
 
 .cell.highlighted {

@@ -17,15 +17,16 @@
     justify-content: space-between;
 
     color: #343434;
-    font-weight: 500;
-    font-size: 1.1em;
+    font-weight: 700;
+    font-size: 1.2em;
     margin-bottom: 5px;
 }
 .enemy-cell {
     position: relative;
     border: 0.5px solid rgb(70, 70, 70);
     background-color: #FFFFFF;
-
+    
+    box-sizing: border-box;
     width: 100%;
 }
 
@@ -39,14 +40,8 @@
 }
 .enemy-cell.selected {
     /* background-color: #BAFFC9; */
-    box-sizing: border-box;
-    border-width: 15px;
-    border-color: #BAFFC9;
+    border-width: 3px;
     z-index: 3;
-}
-
-.enemy-text {
-    font-weight: 700;
 }
 
 .ready {

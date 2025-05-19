@@ -22,14 +22,19 @@ export default function Grid({ grid, onCellClick, playerState, clues, selectedCl
     function getCellClass(row: number, col : number) {
         let classes = "cell "
 
-        if (row == playerState.cell[0] && col == playerState.cell[1])
-            classes += " selected"
-        else if (grid && grid[row][col].isBlock)
+        if (grid && grid[row][col].isBlock)
             classes += " blocked"
-        else if (playerState.dir == 0 && row == playerState.cell[0])
-            classes += " highlighted"
-        else if (playerState.dir == 1 && col == playerState.cell[1])
-            classes += " highlighted"
+
+        else {
+
+            if (row == playerState.cell[0] && col == playerState.cell[1])
+                classes += " selected"
+            
+            if (playerState.dir == 0 && row == playerState.cell[0])
+                classes += " highlighted"
+            else if (playerState.dir == 1 && col == playerState.cell[1])
+                classes += " highlighted"
+        }
 
         const selectedClueId = selectedClues?.mainClueId;
         if (selectedClueId != undefined) {
