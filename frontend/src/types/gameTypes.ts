@@ -57,10 +57,13 @@ export interface PlayerState {
 
 // --------- Enemy ---------
 export interface EnemyState {
-    filledCells: boolean[]; // length 25 i hope
+    id : string
+    name : string
+    ready : boolean
+    ghostState: GhostState
+}
+export interface GhostState {
+    filledCells: boolean[]
 
     selectedCellIndex: number
-
-
-
 }

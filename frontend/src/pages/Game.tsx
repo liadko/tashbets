@@ -11,11 +11,17 @@ import { useSession } from '../context/SessionContext'
 
 
 
-import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, EnemyState } from '../types/gameTypes'
+import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, GhostState, EnemyState } from '../types/gameTypes'
 import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex } from '../utils/gridUtils'
 import { smartTeleport } from '../utils/playerUtils'
+import { getDefaultEnemyState, getGhostState } from '../utils/ghostUtils'
 
-export default function Game() {
+
+type GameProps = {
+    sendMessage: (msg: any) => boolean;
+    setMessageHandler: (fn: (msg: any) => void) => void;
+}
+export default function Game({ sendMessage, setMessageHandler }: GameProps) {
     // ----------- constants -----------
 
     const initialPlayerState: PlayerState = {
@@ -23,16 +29,6 @@ export default function Game() {
         dir: 0,  // 0 = horizontal, 1 = vertical
     }
 
-    const tempEnemyState: EnemyState = {
-        filledCells: [
-            false, false, false, false, false,
-            false, false, false, false, false,
-            true, true, true, true, false,
-            false, false, false, false, false,
-            false, false, false, false, false,
-        ],
-        selectedCellIndex: 10
-    }
     const gridSize = 5
 
     // ----------- puzzle state -----------
@@ -40,27 +36,81 @@ export default function Game() {
     const [gridState, setGrid] = useState<GridState>(() => createGrid(null))
 
     // ----------- player state -----------
-    const [loggedIn, setLoggedIn] = useState(true)
     const { playerState, setDir, setCell } = usePlayerState(initialPlayerState)
     const [isReady, setReady] = useState<boolean>(false)
-    
+
     // ----------- site state -----------
     const navigate = useNavigate()
-    const { name, roomCode } = useSession();
+    const { name, roomCode, id } = useSession();
 
 
     // ----------- Networking -----------
-    const [enemyState, setEnemyState] = useState<EnemyState>(tempEnemyState)
+    const [enemies, setEnemies] = useState<Record<string, EnemyState>>({});
 
 
+    // player state updater
+    useEffect(() => {
+        sendMessage({
+            "type": "update_state",
+            "ready": isReady,
+            "ghostState": getGhostState(gridState, playerState)
+        })
+    }, [gridState, playerState, isReady])
 
-    // const handleSend = () => {
-    //     console.log("Sending Message")
-    //     const message = { type: 'guess', cell: [1, 2], letter: 'A' }
-    //     sendMessage(message)
-    // }
 
+    // fetch info about room. single time thing
+    useEffect(() => {
+        sendMessage({
+            "type": "get_room_info",
+        })
+    }, [])
+    
     // ----------- Effects -----------
+
+    useEffect(() => {
+        setMessageHandler((msg) => {
+            if (msg.type === "room_info") {
+
+                const enemyList: Record<string, EnemyState> = {}
+                for (const player of msg.players) {
+                    if (player.id === id) continue
+
+                    const enemyState: EnemyState = {
+                        id: player.id,
+                        name: player.name,
+                        ready: player.ready,
+                        ghostState: player.ghostState
+                    }
+                    enemyList[player.id] = enemyState
+                }
+
+                setEnemies(enemyList)
+                console.log(id, "has these enemies", enemyList)
+            }
+            else if (msg.type === "new_player_joined") {
+                console.log("Someone joined with id:", msg.id)
+
+                setEnemies((prev) => ({
+                    ...prev,
+                    [msg.id]: getDefaultEnemyState(msg.id, msg.name)
+                }))
+            }
+            else if (msg.type === "player_update") {
+                console.log("got player update from", msg.id)
+
+                setEnemies((prev) => ({
+                    ...prev,
+                    [msg.id]: {
+                        ...prev[msg.id],
+                        ready: msg.ready,
+                        ghostState: msg.ghostState
+                    }
+                }))
+            }
+            else
+                console.log("Unrecognised message from server, type:", msg.type)
+        })
+    }, [setMessageHandler])
 
     // load puzzle json
     useEffect(() => {
@@ -161,7 +211,7 @@ export default function Game() {
         }
     }, [gridState, playerState])
 
-    // kicks to landing page
+    // refresh kicks to landing page
     useEffect(() => {
         if (!name || !roomCode) {
             navigate('/');
@@ -206,6 +256,10 @@ export default function Game() {
 
         // clicked on other cell
         setCell([row, col])
+    }
+
+    function leaveRoom() {
+
     }
 
     // Clue functions
@@ -270,7 +324,7 @@ export default function Game() {
                                 teleport={handleTeleport} />
 
                             <div className='cluestack-overlay'>
-                                <button className={"ready-button" + ( isReady ? " filled" : "")} onClick={readyClick}>READY</button>
+                                <button className={"ready-button" + (isReady ? " filled" : "")} onClick={readyClick}>READY</button>
                             </div>
 
 
@@ -279,8 +333,13 @@ export default function Game() {
                     </div>
                 </div>
                 <div className='enemy-side'>
-                    <EnemyGrid grid={gridState} enemyState={enemyState} />
-                    <EnemyGrid grid={gridState} enemyState={enemyState} />
+                    {Object.values(enemies).map((enemy) => (
+                        <EnemyGrid
+                            key={enemy.id}
+                            grid={gridState}
+                            enemyState={enemy}
+                        />
+                    ))}
                 </div>
             </div>
         </>

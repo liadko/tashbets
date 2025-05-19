@@ -12,7 +12,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
     const navigate = useNavigate()
     const codeRef = useRef<HTMLInputElement>(null)
     const nameRef = useRef<HTMLInputElement>(null)
-    const { setName, setRoomCode } = useSession()
+    const { setName, setRoomCode, setId } = useSession()
 
 
 
@@ -31,7 +31,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
             "type": "create_room",
             "name": name
         })
-        if(!success)
+        if (!success)
             console.log("TOAST: server unavailable")
 
     }
@@ -64,21 +64,23 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
             if (msg.type === "room_created") {
                 console.log("Room created with code:", msg.room_code)
                 setRoomCode(msg.room_code)
+                setId(msg.id)
 
                 navigate("/game")
             }
             else if (msg.type === "room_joined") {
                 console.log("Room joined with code:", msg.room_code)
                 setRoomCode(msg.room_code)
-
+                setId(msg.id)
+                
                 navigate("/game")
             }
             else if (msg.type === "room_invalid") {
                 console.log("Room not found")
-                
+
 
             }
-            else 
+            else
                 console.log("Unrecognised message from server, type:", msg.type)
         })
     }, [setMessageHandler])
@@ -132,7 +134,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                     </div>
 
                     <div className="landing-controls">
-                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue="Liad"/>
+                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue="Liad" />
 
 
                         <input type="text" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />

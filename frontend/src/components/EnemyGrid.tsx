@@ -1,7 +1,7 @@
 import './EnemyGrid.css'
 
-import { GridState, EnemyState } from '../types/gameTypes'
-import {getCell, getGridPosByCellIndex } from '../utils/gridUtils'
+import { GridState, GhostState, EnemyState } from '../types/gameTypes'
+import { getCell, getGridPosByCellIndex } from '../utils/gridUtils'
 
 interface EnemyGridProps {
     grid: GridState;
@@ -15,29 +15,41 @@ export default function EnemyGrid({ grid, enemyState }: EnemyGridProps) {
         let classes = "enemy-cell "
 
 
-        if(getCell(getGridPosByCellIndex(cellIndex), grid).isBlock)
+        if (getCell(getGridPosByCellIndex(cellIndex), grid).isBlock)
             classes += "blocked "
-        else if (enemyState.selectedCellIndex == cellIndex)
-            classes += "selected "
 
-        else if (enemyState?.filledCells[cellIndex])
-            classes += "filled "
+        else {
+            if (enemyState.ghostState.selectedCellIndex == cellIndex)
+                classes += "selected "
+
+            if (enemyState.ghostState.filledCells[cellIndex])
+                classes += "filled "
+        }
 
         return classes
     }
+    function getTextClass() {
+        let classes = "enemy-text"
 
+        if (enemyState.ready)
+            classes += " ready"
+        else
+            classes += " not-ready"
+
+        return classes
+    }
     // ----------- Render -----------
     return (
         <>
             <div className="enemy-grid-wrapper">
                 <div className='enemy-info'>
-                    <span className='enemy-name'>TOMER</span>
-                    <span className='enemy-text'>READY</span>
+                    <span className='enemy-name'>{enemyState.name}</span>
+                    <span className={getTextClass()}>READY</span>
                 </div>
                 <div className="grid"
                     style={{ ["--grid-rows" as any]: grid.length }}>
                     {
-                        enemyState.filledCells.map((cell, cellId) =>
+                        enemyState.ghostState?.filledCells.map((cell, cellId) =>
                             <div key={`${cellId}`}
                                 className={getCellClass(cellId)}>
                             </div>)

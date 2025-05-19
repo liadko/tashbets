@@ -30,12 +30,14 @@ func (r *Room) RemovePlayer(id string) {
 
 }
 
-func (r *Room) Broadcast(msg map[string]any) {
+func (r *Room) Broadcast(msg map[string]any, excludee_id string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	for _, player := range r.players {
-		player.send <- msg
+		if player.id != excludee_id {
+			player.send <- msg
+		}
 	}
 }
 

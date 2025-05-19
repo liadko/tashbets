@@ -23,12 +23,6 @@ export function smartTeleport(initialCellPos: [number, number], dir: 0 | 1, grid
 
     return { newCell: currentCellPos, newDir: dir }
 
-    // setPlayerState((prev) => ({
-    //     ...prev,
-    //     cell: currentCellPos
-    // }))
-
-    // setDir(dir)
 }
 
 

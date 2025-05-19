@@ -16,7 +16,7 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<LandingPage sendMessage={sendMessage} setMessageHandler={setHandler} />} />
-                    <Route path="/game" element={<Game />} />
+                    <Route path="/game" element={<Game sendMessage={sendMessage} setMessageHandler={setHandler}/>} />
                 </Routes>
             </Router>
         </SessionProvider>

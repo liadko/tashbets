@@ -98,3 +98,8 @@ export function moveSelected(direction: 0 | 1, move: -1 | 1, playerState: Player
 export function getGridPosByCellIndex(cellIndex: number) {
     return [Math.floor(cellIndex / 5), cellIndex % 5] as [number, number]
 }
+
+
+export function getCellIndexByGridPos(pos: [number, number]) {
+    return pos[1] + pos[0] * 5
+}

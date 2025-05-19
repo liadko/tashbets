@@ -38,7 +38,21 @@
 
 }
 .enemy-cell.selected {
-    background-color: #BAFFC9;
-
+    /* background-color: #BAFFC9; */
+    box-sizing: border-box;
+    border-width: 15px;
+    border-color: #BAFFC9;
+    z-index: 3;
 }
 
+.enemy-text {
+    font-weight: 700;
+}
+
+.ready {
+    color: #006B2E
+}
+
+.not-ready {
+    color: #D50000
+}

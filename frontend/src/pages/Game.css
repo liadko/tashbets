@@ -97,6 +97,7 @@
 }
 
 .ready-button {
+    background-color: white;
     border: 4px solid #005412;
     width: 190px;
     height: 40px;

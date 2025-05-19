@@ -2,11 +2,21 @@ package main
 
 import "github.com/gorilla/websocket"
 
+type GhostState struct {
+	FilledCells       []bool `json:"filledCells"`
+	SelectedCellIndex int    `json:"selectedCellIndex"`
+}
+
 type Player struct {
 	id   string
 	name string
+
+	ready      bool
+	ghostState GhostState
+
 	conn *websocket.Conn
 	send chan map[string]any
+
 	room *Room
 }
 
