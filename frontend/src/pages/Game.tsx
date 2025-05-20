@@ -64,7 +64,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
             "type": "get_room_info",
         })
     }, [])
-    
+
     // ----------- Effects -----------
 
     useEffect(() => {
@@ -94,6 +94,15 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                     ...prev,
                     [msg.id]: getDefaultEnemyState(msg.id, msg.name)
                 }))
+            }
+            else if (msg.type === "player_left") {
+                console.log("Player left with id", msg.id)
+
+                setEnemies((prev) => {
+                    const updated = { ...prev };
+                    delete updated[msg.id];
+                    return updated;
+                });
             }
             else if (msg.type === "player_update") {
                 console.log("got player update from", msg.id)

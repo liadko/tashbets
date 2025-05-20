@@ -120,6 +120,7 @@ func HandleMessage(p *Player, msg map[string]any) {
 
 		// Save it
 		p.ghostState = ghost
+		p.ready = ready
 		p.room.Broadcast(map[string]any{
 			"type":       "player_update",
 			"id":         p.id,

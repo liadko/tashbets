@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type Room struct {
 	code    string
@@ -24,9 +27,16 @@ func (r *Room) AddPlayer(p *Player) {
 
 func (r *Room) RemovePlayer(id string) {
 	r.mutex.Lock()
-	defer r.mutex.Unlock()
 
+	log.Println(r.players[id].name, "Left the room")
 	delete(r.players, id)
+
+	r.mutex.Unlock()
+
+	r.Broadcast(map[string]any{
+		"type": "player_left",
+		"id":   id,
+	}, id)
 
 }
 
@@ -34,6 +44,7 @@ func (r *Room) Broadcast(msg map[string]any, excludee_id string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
+	log.Println(len(r.players))
 	for _, player := range r.players {
 		if player.id != excludee_id {
 			player.send <- msg
