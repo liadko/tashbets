@@ -152,6 +152,11 @@
     align-items: end;
 }
 
+.timer {
+    width: 60px;
+    text-align: left;
+
+}
 
 .puzzle-area {
     display: flex;

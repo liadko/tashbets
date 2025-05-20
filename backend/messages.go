@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 )
 
@@ -41,7 +40,7 @@ func HandleMessage(p *Player, msg map[string]any) {
 
 		room, exists := hub.GetRoom(code)
 
-		if !exists {
+		if !exists || room.gameRunning {
 			p.send <- map[string]any{
 				"type":      "room_invalid",
 				"room_code": code,
@@ -91,44 +90,40 @@ func HandleMessage(p *Player, msg map[string]any) {
 			"players": playerList,
 		}
 	case "update_state":
-		stateRaw, ok := msg["ghostState"]
+
+		// extract the raw map (one check)
+		stateMap, ok := msg["ghostState"].(map[string]any)
 		if !ok {
-			log.Println("No state field")
+			log.Println("missing ghostState")
 			return
 		}
 
-		// Marshal the `map[string]any` back to JSON bytes
-		stateBytes, err := json.Marshal(stateRaw)
-		if err != nil {
-			log.Println("Failed to re-marshal state:", err)
-			return
+		// build GhostState directly from the map
+		rawCells := stateMap["filledCells"].([]any) // panic if bad
+		ghost := GhostState{
+			FilledCells:       make([]bool, len(rawCells)),
+			SelectedCellIndex: int(stateMap["selectedCellIndex"].(float64)),
+		}
+		for i, v := range rawCells {
+			ghost.FilledCells[i] = v.(bool)
 		}
 
-		// Unmarshal into struct
-		var ghost GhostState
-		if err := json.Unmarshal(stateBytes, &ghost); err != nil {
-			log.Println("Invalid ghost state JSON:", err)
-			return
-		}
-
-		// IsReady
-		ready, ok := msg["ready"].(bool)
-		if !ok {
-			log.Println("Ready Could not Be parsed")
-			return
-		}
-
-		// Save it
+		// extract ready flag (no check, will panic if wrong)
+		p.ready = msg["ready"].(bool)
 		p.ghostState = ghost
-		p.ready = ready
+
+		// broadcast
 		p.room.Broadcast(map[string]any{
 			"type":       "player_update",
 			"id":         p.id,
-			"ready":      ready,
+			"ready":      p.ready,
 			"ghostState": ghost,
 		}, p.id)
 
-		log.Printf("%s updated ghost state %v", p.name, p.ready)
+		p.room.CheckReadies()
+
+		log.Printf("%s updated (ready=%v)", p.name, p.ready)
+
 	default:
 		log.Printf("Unhandled message type: %s from player %s", msgType, p.id)
 

@@ -43,6 +43,8 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
     const navigate = useNavigate()
     const { name, roomCode, id } = useSession();
 
+    const [gameRunning, setGameRunning] = useState<boolean>(false)
+    const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
 
     // ----------- Networking -----------
     const [enemies, setEnemies] = useState<Record<string, EnemyState>>({});
@@ -105,7 +107,6 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                 });
             }
             else if (msg.type === "player_update") {
-                console.log("got player update from", msg.id)
 
                 setEnemies((prev) => ({
                     ...prev,
@@ -115,6 +116,10 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                         ghostState: msg.ghostState
                     }
                 }))
+            }
+            else if (msg.type === "game_start") {
+                console.log("AYO game starting")
+                setGameRunning(true)
             }
             else
                 console.log("Unrecognised message from server, type:", msg.type)
@@ -135,6 +140,19 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                 console.error("Error loading puzzle json", err)
             })
     }, [])
+
+
+    // start timer
+    useEffect(() => {
+        if (!gameRunning) return;
+
+        const interval = setInterval(() => {
+            setElapsedSeconds((prev) => prev + 1);
+        }, 1000);
+
+        return () => clearInterval(interval); // stop timer on unmount or when gameRunning flips
+    }, [gameRunning]);
+
 
     // key input
     useEffect(() => {
@@ -318,22 +336,25 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                         <div className="puzzle-area">
                             <div className="info-bar">
                                 <span className='nametag'>{name}</span>
-                                <span className='timer'>00:00</span>
+                                <span className='timer'>
+                                    {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:
+                                    {String(elapsedSeconds % 60).padStart(2, '0')}
+                                </span>
                             </div>
-                            <Cluebar clues={parsedClues} selectedClues={selectedClues} />
+                            <Cluebar clues={parsedClues} selectedClues={selectedClues} gameRunning={gameRunning} />
                             <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} />
 
                         </div>
-                        <div className='cluestack-wrapper blurred'>
+                        <div className={"cluestack-wrapper" + (gameRunning ? "" : " blurred")}>
 
                             <ClueStack
                                 clues={parsedClues}
                                 selectedClues={selectedClues}
                                 teleport={handleTeleport} />
 
-                            <div className='cluestack-overlay'>
+                            {!gameRunning && <div className='cluestack-overlay'>
                                 <button className={"ready-button" + (isReady ? " filled" : "")} onClick={readyClick}>READY</button>
-                            </div>
+                            </div>}
 
 
                         </div>

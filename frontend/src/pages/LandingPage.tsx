@@ -65,14 +65,14 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                 console.log("Room created with code:", msg.room_code)
                 setRoomCode(msg.room_code)
                 setId(msg.id)
-
+                
                 navigate("/game")
             }
             else if (msg.type === "room_joined") {
                 console.log("Room joined with code:", msg.room_code)
                 setRoomCode(msg.room_code)
                 setId(msg.id)
-                
+
                 navigate("/game")
             }
             else if (msg.type === "room_invalid") {
