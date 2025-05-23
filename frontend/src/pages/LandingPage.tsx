@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback, useContext } from 'r
 import './LandingPage.css'
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../context/SessionContext'
+import { Toaster, Toast } from '../components/Toaster';
 
 type LandingProps = {
     sendMessage: (msg: any) => boolean;
@@ -14,14 +15,25 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
     const nameRef = useRef<HTMLInputElement>(null)
     const { setName, setRoomCode, setId } = useSession()
 
+    // ----------- Toasts -----------
+    const [toasts, setToasts] = useState<Toast[]>([])
 
+    // call this whenever you want to show a message
+    const showToast = useCallback((message: string) => {
+        const id = Date.now()
+        setToasts(prev => [...prev, { id, message }])
+        // remove after 3s
+        setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id))
+        }, 30000)
+    }, [])
 
     // ----------- Networking -----------
     function handleCreate() {
         const name = nameRef.current?.value.trim();
 
         if (!name) {
-            alert("Please Enter Your Name");
+            showToast("Please Enter Your Name")
             return;
         }
 
@@ -32,7 +44,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
             "name": name
         })
         if (!success)
-            console.log("TOAST: server unavailable")
+            showToast("Server Unavailable")
 
     }
     function handleJoin() {
@@ -40,22 +52,25 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
         const name = nameRef.current?.value.trim();
 
         if (!name) {
-            alert("Please Enter Your Name");
+            showToast("Please Enter Your Name")
             return;
         }
 
         if (!code) {
-            alert("Please Enter Room Code");
+            showToast("Please Enter Room Code")
             return;
         }
 
         setName(name)
 
-        sendMessage({
+        const success = sendMessage({
             "type": "join_room",
             "name": name,
             "code": code
         })
+        if (!success)
+            showToast("Server Unavailable")
+
     }
 
     // ----------- Effects -----------
@@ -65,7 +80,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                 console.log("Room created with code:", msg.room_code)
                 setRoomCode(msg.room_code)
                 setId(msg.id)
-                
+
                 navigate("/game")
             }
             else if (msg.type === "room_joined") {
@@ -76,7 +91,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                 navigate("/game")
             }
             else if (msg.type === "room_invalid") {
-                console.log("Room not found")
+                showToast("Room not found")
 
 
             }
@@ -145,6 +160,9 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                     </div>
 
                 </div>
+
+
+                <Toaster toasts={toasts} />
 
             </div>
 

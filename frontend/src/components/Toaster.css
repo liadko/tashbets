@@ -1,0 +1,27 @@
+.toaster {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.toast {
+  color: #FC7D7D;
+  border-radius: 0.25em;
+  font-size: 1.3em;
+  font-weight: 700;
+  text-align: center;
+  animation: fade-in-out 3s forwards;
+}
+
+@keyframes fade-in-out {
+  0%   { opacity: 0; transform: translateY(20px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  90%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
