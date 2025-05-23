@@ -15,13 +15,16 @@ import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzz
 import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex } from '../utils/gridUtils'
 import { smartTeleport } from '../utils/playerUtils'
 import { getDefaultEnemyState, getGhostState } from '../utils/ghostUtils'
+import { Toast, Toaster } from '../components/Toaster'
 
 
 type GameProps = {
     sendMessage: (msg: any) => boolean;
     setMessageHandler: (fn: (msg: any) => void) => void;
+    serverStatus: 'open' | 'connecting' | 'closed';
+
 }
-export default function Game({ sendMessage, setMessageHandler }: GameProps) {
+export default function Game({ sendMessage, setMessageHandler, serverStatus }: GameProps) {
     // ----------- constants -----------
 
     const initialPlayerState: PlayerState = {
@@ -44,7 +47,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
     const { name, roomCode, id } = useSession();
 
     const [gameRunning, setGameRunning] = useState<boolean>(false)
-    const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
+    const [startTime, setStartTime] = useState<number>(0)
 
     // ----------- Networking -----------
     const [enemies, setEnemies] = useState<Record<string, EnemyState>>({});
@@ -68,7 +71,13 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
     }, [])
 
     // ----------- Effects -----------
+    // server status listener
+    useEffect(() => {
+        if (serverStatus === 'closed')
+            leaveRoom()
+    }, [serverStatus])
 
+    // Message Handling
     useEffect(() => {
         setMessageHandler((msg) => {
             if (msg.type === "room_info") {
@@ -120,6 +129,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
             else if (msg.type === "game_start") {
                 console.log("AYO game starting")
                 setGameRunning(true)
+                setStartTime(msg.start_time)
             }
             else
                 console.log("Unrecognised message from server, type:", msg.type)
@@ -134,24 +144,13 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                 setPuzzleData(data)
                 const newGrid = createGrid(data?.body[0].cells ?? null)
                 setGrid(newGrid)
-                startGame(newGrid)
+                initGrid(newGrid)
             })
             .catch((err) => {
                 console.error("Error loading puzzle json", err)
             })
     }, [])
 
-
-    // start timer
-    useEffect(() => {
-        if (!gameRunning) return;
-
-        const interval = setInterval(() => {
-            setElapsedSeconds((prev) => prev + 1);
-        }, 1000);
-
-        return () => clearInterval(interval); // stop timer on unmount or when gameRunning flips
-    }, [gameRunning]);
 
 
     // key input
@@ -240,12 +239,12 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
     // refresh kicks to landing page
     useEffect(() => {
         if (!name || !roomCode) {
-            navigate('/');
+            leaveRoom()
         }
-    }, [name, roomCode, navigate]);
+    }, [name, roomCode]);
 
     // Game Logic
-    function startGame(grid: GridState) {
+    function initGrid(grid: GridState) {
         // const firstCell = getValidCell(grid)
         // setCell(firstCell)
         handleTeleport([0, 0], 0, grid)
@@ -285,7 +284,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
     }
 
     function leaveRoom() {
-
+        navigate("/")
     }
 
     // Clue functions
@@ -314,6 +313,10 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
         };
     }, [playerState, puzzleData, gridState])
 
+    // Timer
+    const elapsedSeconds = (Date.now() - startTime * 1000) / 1000
+    const minutes = gameRunning ? String(Math.floor(elapsedSeconds / 60)).padStart(2, '0') : "00"
+    const seconds = gameRunning ? String(elapsedSeconds % 60).padStart(2, '0') : "00"
 
     // ----------- Render -----------
     return (
@@ -321,7 +324,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
             <div className='game-container'>
                 <div className="navbar">
                     <img src="/close.svg" className="close-button" alt="Close"
-                        onClick={() => navigate("/")} />
+                        onClick={leaveRoom} />
 
                     <div className="room-code" onClick={() => navigator.clipboard.writeText(roomCode)}>
                         ROOM: <span>{roomCode}</span>
@@ -337,8 +340,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                             <div className="info-bar">
                                 <span className='nametag'>{name}</span>
                                 <span className='timer'>
-                                    {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:
-                                    {String(elapsedSeconds % 60).padStart(2, '0')}
+                                    {minutes}:{seconds}
                                 </span>
                             </div>
                             <Cluebar clues={parsedClues} selectedClues={selectedClues} gameRunning={gameRunning} />
@@ -370,6 +372,7 @@ export default function Game({ sendMessage, setMessageHandler }: GameProps) {
                         />
                     ))}
                 </div>
+
             </div>
         </>
 

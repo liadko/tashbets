@@ -12,6 +12,7 @@
     height: 80px;
     width: 100vw;
 
+
     display: flex;
     align-items: center;
     z-index: 10;
@@ -23,6 +24,11 @@
     cursor: pointer;
 }
 
+.close-button:active {
+        transform: scale(0.95);
+
+}
+
 .room-code {
     display: flex;
     align-items: center;
@@ -31,8 +37,10 @@
     font-size: 1.2em;
     cursor: pointer;
     user-select: none;
+
     color: #343434;
     justify-content: space-evenly;
+
 
     border: 3px solid transparent;
     border-radius: 5px;

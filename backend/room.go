@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"sync"
+	"time"
 )
 
 type Room struct {
@@ -11,6 +12,7 @@ type Room struct {
 	mutex   sync.Mutex
 
 	gameRunning bool
+	startTime   time.Time
 }
 
 func NewRoom(code string) *Room {
@@ -48,10 +50,12 @@ func (r *Room) StartGame() {
 
 	r.mutex.Lock()
 	r.gameRunning = true
+	r.startTime = time.Now()
 	r.mutex.Unlock()
 
 	r.Broadcast(map[string]any{
-		"type": "game_start",
+		"type":       "game_start",
+		"start_time": r.startTime.Unix(),
 	}, "")
 
 }

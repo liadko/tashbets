@@ -1,21 +1,22 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 
 export function useWebSocket(url: string) {
     const wsRef = useRef<WebSocket>(null)
     const handlerRef = useRef<(msg: any) => void>(() => { console.log("Message Handler Called But Not Set") })
     const retryRef = useRef<NodeJS.Timeout | null>(null)
-
+    const [serverStatus, setServerStatus] = useState<'connecting' | 'open' | 'closed'>('connecting')
     const retryDelay = 1000 // ms
 
     const connect = useCallback(() => {
         clearTimeout(retryRef.current!)          // cancel pending retries
-    
+
         const ws = new WebSocket(url)
         wsRef.current = ws;
 
 
         ws.onopen = () => {
-            console.log('WebSocket connected')
+            //console.log('WebSocket connected')
+            setServerStatus('open')
         };
 
         ws.onmessage = (event: MessageEvent) => {
@@ -28,7 +29,7 @@ export function useWebSocket(url: string) {
         };
 
         const schedule = () => {
-            console.warn('ws down – retrying soon…')
+            setServerStatus('closed')
             retryRef.current = setTimeout(connect, retryDelay)
         }
         ws.onclose = schedule
@@ -65,5 +66,5 @@ export function useWebSocket(url: string) {
         handlerRef.current = fn
     }, [])
 
-    return { sendMessage, setMessageHandler }
+    return { sendMessage, setMessageHandler, serverStatus }
 }

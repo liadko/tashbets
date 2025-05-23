@@ -8,7 +8,7 @@ import { SessionProvider } from './context/SessionContext';
 
 function App() {
 
-    const { sendMessage, setMessageHandler: setHandler } = useWebSocket('ws://localhost:8080/ws')
+    const { sendMessage, setMessageHandler: setHandler, serverStatus } = useWebSocket('ws://localhost:8080/ws')
 
 
     return <>
@@ -16,7 +16,7 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<LandingPage sendMessage={sendMessage} setMessageHandler={setHandler} />} />
-                    <Route path="/game" element={<Game sendMessage={sendMessage} setMessageHandler={setHandler}/>} />
+                    <Route path="/game" element={<Game sendMessage={sendMessage} setMessageHandler={setHandler} serverStatus={serverStatus}/>} />
                 </Routes>
             </Router>
         </SessionProvider>
