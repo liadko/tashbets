@@ -1,6 +1,6 @@
 export interface Cell {
-    row : number;
-    col : number;
+    row: number;
+    col: number;
 
     isBlock: boolean;
 
@@ -46,7 +46,9 @@ export interface SelectedClueData {
 }
 
 export interface RawPuzzleData {
-    body: { clues: RawClue[], cells: RawCell[] }[]
+    body: {
+        clues: RawClue[], cells: RawCell[]
+    }[]
 }
 
 export interface PlayerState {
@@ -57,9 +59,9 @@ export interface PlayerState {
 
 // --------- Enemy ---------
 export interface EnemyState {
-    id : string
-    name : string
-    ready : boolean
+    id: string
+    name: string
+    ready: boolean
     ghostState: GhostState
 }
 export interface GhostState {

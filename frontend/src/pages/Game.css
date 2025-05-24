@@ -12,7 +12,7 @@
     height: 80px;
     width: 100vw;
 
-
+    
     display: flex;
     align-items: center;
     z-index: 10;
@@ -63,6 +63,14 @@
 .copy-icon {
     width: 16px;
     height: 16px;
+}
+
+.puzzle-date {
+    color: #343434;
+    margin-left: 40px;
+    font-size: 1.1em;
+    font-weight: 500;
+
 }
 
 .player-side {

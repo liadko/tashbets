@@ -101,7 +101,21 @@ p {
     width: 100%;
 }
 
-
+.landing-cell.blocked {
+    background-color: black;
+}
+.landing-cell.gray {
+    background-color: #e7e7e7;
+}
+.landing-cell.lightgray {
+    background-color: #f5f5f5;
+}
+.landing-cell.pink {
+    background-color: #F99393;
+}
+.landing-cell.eye {
+    background-color: #8ec299;
+}
 /* Controls */
 
 .landing-controls {

@@ -95,6 +95,11 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
 
 
             }
+            else if (msg.type === "room_active") {
+                showToast("Room's game already started")
+
+
+            }
             else
                 console.log("Unrecognised message from server, type:", msg.type)
         })
@@ -119,32 +124,31 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                             <span className="landing-cluebar-text">Inspired By NYT Mini Crossword</span>
                         </div>
                         <div className='landing-grid'>
+                            <div className="landing-cell lightgray"></div>
+                            <div className="landing-cell"></div>
+                            <div className="landing-cell blocked"></div>
+                            <div className="landing-cell"></div>
+                            <div className="landing-cell lightgray"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
+                            <div className="landing-cell "></div>
+                            <div className="landing-cell"></div>
+                            <div className="landing-cell eye"></div>
+                            <div className="landing-cell "></div>
+                            <div className="landing-cell eye"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
+                            <div className="landing-cell pink"></div>
+                            <div className="landing-cell"></div>
+                            <div className="landing-cell"></div>
+                            <div className="landing-cell blocked"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
                             <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-
+                            <div className="landing-cell blocked"></div>
                         </div>
                     </div>
 

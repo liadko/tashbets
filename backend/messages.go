@@ -14,7 +14,6 @@ func HandleMessage(p *Player, msg map[string]any) {
 
 	switch msgType {
 	case "create_room":
-		log.Println("create_room by ", p.id)
 
 		name, _ := msg["name"].(string)
 		p.name = name
@@ -40,9 +39,18 @@ func HandleMessage(p *Player, msg map[string]any) {
 
 		room, exists := hub.GetRoom(code)
 
-		if !exists || room.gameRunning {
+		if !exists {
 			p.send <- map[string]any{
 				"type":      "room_invalid",
+				"room_code": code,
+			}
+
+			return
+		}
+
+		if room.gameRunning {
+			p.send <- map[string]any{
+				"type":      "room_active",
 				"room_code": code,
 			}
 
@@ -86,8 +94,10 @@ func HandleMessage(p *Player, msg map[string]any) {
 		}
 
 		p.send <- map[string]any{
-			"type":    "room_info",
-			"players": playerList,
+			"type":       "room_info",
+			"players":    playerList,
+			"puzzleData": p.room.puzzleData,
+			"puzzleDate": p.room.puzzleDate,
 		}
 	case "update_state":
 
@@ -112,17 +122,32 @@ func HandleMessage(p *Player, msg map[string]any) {
 		p.ready = msg["ready"].(bool)
 		p.ghostState = ghost
 
+		log.Printf("%s guessed %s", p.name, msg["answerString"])
+		log.Printf("should've guessed %s", p.room.answerString)
+		success := msg["answerString"].(string) == p.room.answerString
+
 		// broadcast
 		p.room.Broadcast(map[string]any{
 			"type":       "player_update",
 			"id":         p.id,
 			"ready":      p.ready,
 			"ghostState": ghost,
+			"success":    success,
 		}, p.id)
 
 		p.room.CheckReadies()
 
-		log.Printf("%s updated (ready=%v)", p.name, p.ready)
+		if success {
+			log.Printf("%s won!", p.name)
+			p.send <- map[string]any{
+				"type": "you_won",
+			}
+		}
+
+	case "leave_room":
+		log.Println(p.id, " left room")
+
+		p.room.RemovePlayer(p.id)
 
 	default:
 		log.Printf("Unhandled message type: %s from player %s", msgType, p.id)

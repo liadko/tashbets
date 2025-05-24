@@ -13,13 +13,37 @@ type Room struct {
 
 	gameRunning bool
 	startTime   time.Time
+
+	puzzleData   map[string]any // raw json
+	puzzleDate   string
+	answerString string
 }
 
 func NewRoom(code string) *Room {
+
+	puzzleDate, today := GetNonSaturday()
+	var puzzleData map[string]any
+	var err error
+
+	if today {
+		puzzleData, err = FetchTodayPuzzle()
+	} else {
+		puzzleData, err = LoadPuzzleJson(puzzleDate)
+	}
+
+	if err != nil {
+		log.Panicf("Room Creation Failed %v", err)
+	}
+
+	answerString := GetAnswerString(puzzleData)
+
 	return &Room{
-		code:        code,
-		players:     make(map[string]*Player),
-		gameRunning: false,
+		code:         code,
+		players:      make(map[string]*Player),
+		gameRunning:  false,
+		puzzleData:   puzzleData,
+		puzzleDate:   DateToString(puzzleDate),
+		answerString: answerString,
 	}
 }
 
@@ -61,7 +85,6 @@ func (r *Room) StartGame() {
 }
 
 func (r *Room) CheckReadies() {
-	log.Println("Checkin Readies!")
 
 	r.mutex.Lock()
 
@@ -82,13 +105,12 @@ func (r *Room) CheckReadies() {
 	r.mutex.Unlock()
 
 	if allReady {
-		log.Println("Conclusion, Ready")
-
 		r.StartGame()
-	} else {
-
-		log.Println("Conclusion, Not Ready")
 	}
+
+}
+
+func CheckWin(answerString string) {
 
 }
 
@@ -96,7 +118,6 @@ func (r *Room) Broadcast(msg map[string]any, excludee_id string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	log.Println(len(r.players))
 	for _, player := range r.players {
 		if player.id != excludee_id {
 			player.send <- msg

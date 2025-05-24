@@ -9,7 +9,6 @@ interface GridProps {
     selectedClues?: SelectedClueData
 
 }
-
 export default function Grid({ grid, onCellClick, playerState, clues, selectedClues }: GridProps) {
     // ----------- state -----------
 

@@ -12,7 +12,7 @@ import { useSession } from '../context/SessionContext'
 
 
 import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, GhostState, EnemyState } from '../types/gameTypes'
-import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex } from '../utils/gridUtils'
+import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex, getAnswerString } from '../utils/gridUtils'
 import { smartTeleport } from '../utils/playerUtils'
 import { getDefaultEnemyState, getGhostState } from '../utils/ghostUtils'
 import { Toast, Toaster } from '../components/Toaster'
@@ -22,7 +22,6 @@ type GameProps = {
     sendMessage: (msg: any) => boolean;
     setMessageHandler: (fn: (msg: any) => void) => void;
     serverStatus: 'open' | 'connecting' | 'closed';
-
 }
 export default function Game({ sendMessage, setMessageHandler, serverStatus }: GameProps) {
     // ----------- constants -----------
@@ -32,11 +31,11 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         dir: 0,  // 0 = horizontal, 1 = vertical
     }
 
-    const gridSize = 5
-
     // ----------- puzzle state -----------
     const [puzzleData, setPuzzleData] = useState<RawPuzzleData | null>(null)
     const [gridState, setGrid] = useState<GridState>(() => createGrid(null))
+    const answerString = useMemo(() => getAnswerString(gridState), [gridState])
+    const [puzzleDate, setPuzzleDate] = useState("")
 
     // ----------- player state -----------
     const { playerState, setDir, setCell } = usePlayerState(initialPlayerState)
@@ -48,9 +47,10 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
     const [gameRunning, setGameRunning] = useState<boolean>(false)
     const [startTime, setStartTime] = useState<number>(0)
+    const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
 
     // ----------- Networking -----------
-    const [enemies, setEnemies] = useState<Record<string, EnemyState>>({});
+    const [enemies, setEnemies] = useState<Record<string, EnemyState>>({})
 
 
     // player state updater
@@ -58,7 +58,8 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         sendMessage({
             "type": "update_state",
             "ready": isReady,
-            "ghostState": getGhostState(gridState, playerState)
+            "ghostState": getGhostState(gridState, playerState),
+            "answerString": answerString,
         })
     }, [gridState, playerState, isReady])
 
@@ -96,7 +97,8 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 }
 
                 setEnemies(enemyList)
-                console.log(id, "has these enemies", enemyList)
+                loadPuzzleData(msg.puzzleData)
+                setPuzzleDate(msg.puzzleDate)
             }
             else if (msg.type === "new_player_joined") {
                 console.log("Someone joined with id:", msg.id)
@@ -136,22 +138,16 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         })
     }, [setMessageHandler])
 
-    // load puzzle json
-    useEffect(() => {
-        fetch("2024-12-26.json")
-            .then((res) => res.json())
-            .then((data: RawPuzzleData) => {
-                setPuzzleData(data)
-                const newGrid = createGrid(data?.body[0].cells ?? null)
-                setGrid(newGrid)
-                initGrid(newGrid)
-            })
-            .catch((err) => {
-                console.error("Error loading puzzle json", err)
-            })
-    }, [])
 
-
+    function loadPuzzleData(puzzleData: RawPuzzleData) {
+        if(puzzleData.body[0].cells.length != 25) {
+            console.log("puzzleData is not not 5x5, problem")
+        }
+        setPuzzleData(puzzleData)
+        const newGrid = createGrid(puzzleData.body[0].cells)
+        setGrid(newGrid)
+        initGrid(newGrid)
+    }
 
     // key input
     useEffect(() => {
@@ -284,6 +280,9 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     }
 
     function leaveRoom() {
+        sendMessage({
+            "type": "leave_room"
+        })
         navigate("/")
     }
 
@@ -314,9 +313,22 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     }, [playerState, puzzleData, gridState])
 
     // Timer
-    const elapsedSeconds = (Date.now() - startTime * 1000) / 1000
-    const minutes = gameRunning ? String(Math.floor(elapsedSeconds / 60)).padStart(2, '0') : "00"
-    const seconds = gameRunning ? String(elapsedSeconds % 60).padStart(2, '0') : "00"
+    useEffect(() => {
+        if (!gameRunning || !startTime) return
+
+        const tick = () => {
+            const now = Date.now()
+            setElapsedSeconds(Math.floor((now - startTime * 1000) / 1000))
+        }
+
+        tick() // update immediately
+        const interval = setInterval(tick, 200)
+
+        return () => clearInterval(interval)
+    }, [gameRunning, startTime])
+
+    const minutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')
+    const seconds = String(elapsedSeconds % 60).padStart(2, '0')
 
     // ----------- Render -----------
     return (
@@ -330,6 +342,9 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                         ROOM: <span>{roomCode}</span>
                         <img src="/copy-paste.svg" className="copy-icon" alt="Copy" />
                     </div>
+
+                    <span className='puzzle-date'>{puzzleDate}</span>
+
                 </div>
 
                 <div className="player-side">

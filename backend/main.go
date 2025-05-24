@@ -6,8 +6,15 @@ import (
 )
 
 var hub *Hub
+var config *Config
 
 func main() {
+
+	var err error
+	config, err = LoadConfig("config.json")
+	if err != nil {
+		fmt.Println("Error Loading Config", err)
+	}
 
 	hub = NewHub()
 
@@ -17,7 +24,7 @@ func main() {
 	})
 
 	fmt.Println("Starting WebSocket Server on :8080")
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}

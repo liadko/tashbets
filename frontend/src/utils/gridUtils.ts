@@ -1,5 +1,16 @@
 import { PlayerState, GridState, RawCell, Cell } from '../types/gameTypes';
 
+
+
+export function getAnswerString(grid: GridState) : string {
+    return grid
+        .flat()                              // flatten 2D -> 1D
+        .filter(cell => !cell.isBlock)       // ignore black squares
+        .map(cell => cell.guess ?? ' ')      // use guess, fallback to space
+        .join('')                            // combine into a string
+
+}
+
 export function createGrid(rawCells: RawCell[] | null): GridState {
     const size = 5//Math.sqrt(rawAnswers.length)
     const grid: GridState = []
@@ -14,7 +25,7 @@ export function createGrid(rawCells: RawCell[] | null): GridState {
             const cellIndex = row * size + col
             const rawCell = rawCells?.[cellIndex]
 
-            const isBlock = (rawCell?.answer) == undefined
+            const isBlock = validGrid && (rawCell?.answer) == undefined
 
             const answer = rawCell?.answer
             const label = rawCell?.label
@@ -58,7 +69,7 @@ export function editGuess(prev: GridState, cellPos: [number, number], newGuess: 
 
 }
 export function getCell(cellPos: [number, number], grid: GridState): Cell {
-    
+
     return grid[cellPos[0]][cellPos[1]]
 }
 
