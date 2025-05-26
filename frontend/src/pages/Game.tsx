@@ -12,10 +12,9 @@ import { useSession } from '../context/SessionContext'
 
 
 import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, GhostState, EnemyState } from '../types/gameTypes'
-import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex, getAnswerString } from '../utils/gridUtils'
+import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex, getAnswerString, fillGuesses } from '../utils/gridUtils'
 import { smartTeleport } from '../utils/playerUtils'
-import { getDefaultEnemyState, getGhostState } from '../utils/ghostUtils'
-import { Toast, Toaster } from '../components/Toaster'
+import { getDefaultEnemyState, getGhostState, getTimeString } from '../utils/ghostUtils'
 
 
 type GameProps = {
@@ -34,7 +33,6 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     // ----------- puzzle state -----------
     const [puzzleData, setPuzzleData] = useState<RawPuzzleData | null>(null)
     const [gridState, setGrid] = useState<GridState>(() => createGrid(null))
-    const answerString = useMemo(() => getAnswerString(gridState), [gridState])
     const [puzzleDate, setPuzzleDate] = useState("")
 
     // ----------- player state -----------
@@ -46,12 +44,23 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     const { name, roomCode, id } = useSession();
 
     const [gameRunning, setGameRunning] = useState<boolean>(false)
+    const [gameWon, setGameWon] = useState<boolean>(false)
     const [startTime, setStartTime] = useState<number>(0)
     const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
+    const [shaking, setShaking] = useState<boolean>(false)
 
     // ----------- Networking -----------
     const [enemies, setEnemies] = useState<Record<string, EnemyState>>({})
 
+
+    const answerString = useMemo(() => {
+        const temp = getAnswerString(gridState)
+        // maybe shake timer
+        if (gameRunning && temp.length == 25)
+            triggerShake()
+
+        return temp
+    }, [gridState])
 
     // player state updater
     useEffect(() => {
@@ -61,6 +70,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
             "ghostState": getGhostState(gridState, playerState),
             "answerString": answerString,
         })
+
     }, [gridState, playerState, isReady])
 
 
@@ -87,11 +97,15 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 for (const player of msg.players) {
                     if (player.id === id) continue
 
+
                     const enemyState: EnemyState = {
                         id: player.id,
                         name: player.name,
                         ready: player.ready,
-                        ghostState: player.ghostState
+                        ghostState: player.ghostState,
+                        infoText: "READY",
+                        success: false,
+
                     }
                     enemyList[player.id] = enemyState
                 }
@@ -118,13 +132,15 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 });
             }
             else if (msg.type === "player_update") {
-
                 setEnemies((prev) => ({
                     ...prev,
                     [msg.id]: {
                         ...prev[msg.id],
                         ready: msg.ready,
-                        ghostState: msg.ghostState
+                        ghostState: msg.ghostState,
+                        infoText: msg.success ? getTimeString(msg.timeToWin) : prev[msg.id].infoText,
+                        success: msg.success,
+                        timeToWin: msg.timeToWin,
                     }
                 }))
             }
@@ -132,6 +148,19 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 console.log("AYO game starting")
                 setGameRunning(true)
                 setStartTime(msg.start_time)
+
+                setEnemies(prev => {
+                    const updated: typeof prev = {}
+                    for (const id in prev) {
+                        updated[id] = { ...prev[id], infoText: "" }
+                    }
+                    return updated
+                })
+            }
+            else if (msg.type === "you_won") {
+                setGameWon(true)
+                setElapsedSeconds(msg.timeToWin)
+                setGrid(prev => fillGuesses(prev, msg.answerString))
             }
             else
                 console.log("Unrecognised message from server, type:", msg.type)
@@ -140,8 +169,8 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
 
     function loadPuzzleData(puzzleData: RawPuzzleData) {
-        if(puzzleData.body[0].cells.length != 25) {
-            console.log("puzzleData is not not 5x5, problem")
+        if (puzzleData.body[0].cells.length != 25) {
+            console.error("puzzleData is not not 5x5, problem")
         }
         setPuzzleData(puzzleData)
         const newGrid = createGrid(puzzleData.body[0].cells)
@@ -179,8 +208,9 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
             // letter input
             else if (/^[a-zA-z]$/.test(event.key)) {
+                if (gameWon) return
+
                 const char = event.key.toUpperCase()
-                //if (char != getCell(playerState.cell, gridState).guess) handleSend()
 
                 setGrid(prev => editGuess(prev, playerState.cell, char))
 
@@ -198,6 +228,8 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
             // backspace - delete letter
             else if (event.key == "Backspace") {
+                if (gameWon) return
+
                 // erasing self
                 if (getCell(playerState.cell, gridState).guess?.length) {
                     setGrid(prev => editGuess(prev, playerState.cell, ""))
@@ -260,6 +292,16 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         setDir(newDir)
     }
 
+    function triggerShake() {
+        setShaking(false) // reset first
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setShaking(true)
+                setTimeout(() => setShaking(false), 400)
+            })
+        })
+    }
     // assumes live gridState
     function handleClickCell(row: number, col: number) {
         if (!gridState) return // don't allow clicks before grid has formed
@@ -314,7 +356,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
     // Timer
     useEffect(() => {
-        if (!gameRunning || !startTime) return
+        if (!gameRunning || !startTime || gameWon) return
 
         const tick = () => {
             const now = Date.now()
@@ -325,10 +367,8 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         const interval = setInterval(tick, 200)
 
         return () => clearInterval(interval)
-    }, [gameRunning, startTime])
+    }, [gameRunning, startTime, gameWon])
 
-    const minutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')
-    const seconds = String(elapsedSeconds % 60).padStart(2, '0')
 
     // ----------- Render -----------
     return (
@@ -351,15 +391,15 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                     <div className='grid-cluestack'>
 
 
-                        <div className="puzzle-area">
+                        <div className={'puzzle-area' + (shaking ? ' shake' : '')}>
                             <div className="info-bar">
                                 <span className='nametag'>{name}</span>
-                                <span className='timer'>
-                                    {minutes}:{seconds}
+                                <span className={'timer' + (gameWon ? ' done' : '')}>
+                                    {getTimeString(elapsedSeconds)}
                                 </span>
                             </div>
                             <Cluebar clues={parsedClues} selectedClues={selectedClues} gameRunning={gameRunning} />
-                            <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} />
+                            <Grid grid={gridState} playerState={playerState} onCellClick={handleClickCell} clues={parsedClues} selectedClues={selectedClues} gameWon={gameWon} />
 
                         </div>
                         <div className={"cluestack-wrapper" + (gameRunning ? "" : " blurred")}>

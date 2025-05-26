@@ -13,7 +13,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
     const navigate = useNavigate()
     const codeRef = useRef<HTMLInputElement>(null)
     const nameRef = useRef<HTMLInputElement>(null)
-    const { setName, setRoomCode, setId } = useSession()
+    const { name, setName, setRoomCode, setId } = useSession()
 
     // ----------- Toasts -----------
     const [toasts, setToasts] = useState<Toast[]>([])
@@ -153,7 +153,7 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                     </div>
 
                     <div className="landing-controls">
-                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue="Liad" />
+                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue={name} />
 
 
                         <input type="text" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />

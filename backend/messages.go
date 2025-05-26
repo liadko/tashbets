@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 )
 
 func HandleMessage(p *Player, msg map[string]any) {
@@ -122,9 +123,15 @@ func HandleMessage(p *Player, msg map[string]any) {
 		p.ready = msg["ready"].(bool)
 		p.ghostState = ghost
 
-		log.Printf("%s guessed %s", p.name, msg["answerString"])
-		log.Printf("should've guessed %s", p.room.answerString)
-		success := msg["answerString"].(string) == p.room.answerString
+		success := false
+		timeToWin := 0
+		if p.room.gameRunning {
+
+			log.Printf("%s guessed %s", p.name, msg["answerString"])
+			log.Printf("should've guessed %s", p.room.answerString)
+			success = msg["answerString"].(string) == p.room.answerString
+			timeToWin = int(time.Now().Unix() - p.room.startTime.Unix())
+		}
 
 		// broadcast
 		p.room.Broadcast(map[string]any{
@@ -133,14 +140,19 @@ func HandleMessage(p *Player, msg map[string]any) {
 			"ready":      p.ready,
 			"ghostState": ghost,
 			"success":    success,
+			"timeToWin":  timeToWin,
 		}, p.id)
 
 		p.room.CheckReadies()
 
-		if success {
+		if success && !p.done {
 			log.Printf("%s won!", p.name)
+
+			p.done = true
 			p.send <- map[string]any{
-				"type": "you_won",
+				"type":         "you_won",
+				"timeToWin":    timeToWin,
+				"answerString": p.room.answerString,
 			}
 		}
 

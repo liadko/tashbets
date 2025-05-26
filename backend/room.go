@@ -57,7 +57,7 @@ func (r *Room) AddPlayer(p *Player) {
 func (r *Room) RemovePlayer(id string) {
 	r.mutex.Lock()
 
-	log.Println(r.players[id].name, "Left the room")
+	log.Println(id, "Left the room")
 	delete(r.players, id)
 
 	r.mutex.Unlock()

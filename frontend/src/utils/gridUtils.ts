@@ -4,11 +4,25 @@ import { PlayerState, GridState, RawCell, Cell } from '../types/gameTypes';
 
 export function getAnswerString(grid: GridState) : string {
     return grid
-        .flat()                              // flatten 2D -> 1D
-        .filter(cell => !cell.isBlock)       // ignore black squares
-        .map(cell => cell.guess ?? ' ')      // use guess, fallback to space
-        .join('')                            // combine into a string
+        .flat()                                                 // flatten 2D -> 1Df
+        .map(cell => cell.isBlock ? ' ' : (cell.guess ?? ' '))  // block -> space, guess->guess
+        .join('')                                               // combine into a string
 
+}
+export function fillGuesses(grid: GridState, answer: string): GridState {
+    
+    let i = 0
+    return grid.map(row =>
+        row.map(cell => {
+            if (cell.isBlock) {
+                i++;
+                return cell
+            }
+            const guess = i < answer.length ? answer[i] : ""
+            i++
+            return { ...cell, guess }
+        })
+    )
 }
 
 export function createGrid(rawCells: RawCell[] | null): GridState {

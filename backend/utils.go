@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -45,14 +44,10 @@ func GetAnswerString(puzzleData map[string]any) string {
 	var sb strings.Builder
 	for _, rc := range cellsRaw {
 		cell, _ := rc.(map[string]any)
-		if len(cell) == 0 {
-			continue
-		}
 		if ans, ok := cell["answer"].(string); ok {
 			sb.WriteString(ans)
 		} else {
-			log.Println("Super Weird, answer exists but doesn't have a string")
-			sb.WriteByte(' ')
+			sb.WriteByte(' ') // doesn't have an answer, so it's a block cell
 		}
 	}
 	return sb.String()

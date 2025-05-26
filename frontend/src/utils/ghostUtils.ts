@@ -1,3 +1,4 @@
+import { format } from 'path';
 import { PlayerState, GridState, RawCell, Cell, GhostState, EnemyState } from '../types/gameTypes';
 
 import { getCell, getCellIndexByGridPos } from './gridUtils';
@@ -19,6 +20,9 @@ export function getDefaultEnemyState(id: string, name: string): EnemyState {
         id,
         name,
         ready: false,
+        infoText: "READY",
+        success: false,
+        
         ghostState: initialGhostState,
     }
 }
@@ -38,6 +42,10 @@ export function getGhostState(grid: GridState, playerState: PlayerState): GhostS
     }
 
     return ghost
+}
+
+export function getTimeString(seconds: number) : string {
+    return String(Math.floor(seconds/60)).padStart(2, "0") + ":" + String(seconds%60).padStart(2, "0")  
 }
 
 // export function editGhost(prev: GhostState, cellPos: [number, number], newGuess: string): GridState {

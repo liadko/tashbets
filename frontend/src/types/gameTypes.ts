@@ -61,7 +61,13 @@ export interface PlayerState {
 export interface EnemyState {
     id: string
     name: string
+    
     ready: boolean
+    infoText: string
+
+    success: boolean
+    timeToWin?: number
+
     ghostState: GhostState
 }
 export interface GhostState {

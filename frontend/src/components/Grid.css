@@ -38,7 +38,11 @@
     border-width: 0.2em;
     z-index: 1;
 }
+.letter.win {
+    color: #006B2E;
 
+
+}
 .cell.highlighted {
     background-color: #A7D8FF;
 

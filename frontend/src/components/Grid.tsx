@@ -7,9 +7,10 @@ interface GridProps {
     playerState: PlayerState;
     clues: Clue[];
     selectedClues?: SelectedClueData
+    gameWon: boolean
 
 }
-export default function Grid({ grid, onCellClick, playerState, clues, selectedClues }: GridProps) {
+export default function Grid({ grid, onCellClick, playerState, clues, selectedClues, gameWon }: GridProps) {
     // ----------- state -----------
 
 
@@ -19,7 +20,7 @@ export default function Grid({ grid, onCellClick, playerState, clues, selectedCl
     // ----------- Render Utilities -----------
 
     function getCellClass(row: number, col : number) {
-        let classes = "cell "
+        let classes = "cell"
 
         if (grid && grid[row][col].isBlock)
             classes += " blocked"
@@ -33,7 +34,9 @@ export default function Grid({ grid, onCellClick, playerState, clues, selectedCl
                 classes += " highlighted"
             else if (playerState.dir == 1 && col == playerState.cell[1])
                 classes += " highlighted"
+
         }
+
 
         const selectedClueId = selectedClues?.mainClueId;
         if (selectedClueId != undefined) {
@@ -59,7 +62,7 @@ export default function Grid({ grid, onCellClick, playerState, clues, selectedCl
                             <div key={`${rowId}-${colId}`}
                                 className={getCellClass(rowId, colId)}
                                 onClick={() => onCellClick(rowId, colId)}>
-                                <span className="letter">{cell.guess}</span>
+                                <span className={'letter' + (gameWon ? " win" : "")}>{cell.guess}</span>
                                 <span className="number">{cell.label}</span>
                             </div>))
                     }

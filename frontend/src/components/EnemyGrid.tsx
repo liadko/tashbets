@@ -17,12 +17,13 @@ export default function EnemyGrid({ grid, enemyState }: EnemyGridProps) {
 
         if (getCell(getGridPosByCellIndex(cellIndex), grid).isBlock)
             classes += "blocked "
-
         else {
             if (enemyState.ghostState.selectedCellIndex == cellIndex)
                 classes += "selected "
 
-            if (enemyState.ghostState.filledCells[cellIndex])
+            if (enemyState.success)
+                classes += " win"
+            else if (enemyState.ghostState.filledCells[cellIndex])
                 classes += "filled "
         }
 
@@ -44,7 +45,7 @@ export default function EnemyGrid({ grid, enemyState }: EnemyGridProps) {
             <div className="enemy-grid-wrapper">
                 <div className='enemy-info'>
                     <span className='enemy-name'>{enemyState.name}</span>
-                    <span className={getTextClass()}>READY</span>
+                    <span className={getTextClass()}>{enemyState.infoText}</span>
                 </div>
                 <div className="grid"
                     style={{ ["--grid-rows" as any]: grid.length }}>

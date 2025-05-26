@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gorilla/websocket"
+import (
+	"log"
+
+	"github.com/gorilla/websocket"
+)
 
 type GhostState struct {
 	FilledCells       []bool `json:"filledCells"`
@@ -13,6 +17,7 @@ type Player struct {
 
 	ready      bool
 	ghostState GhostState
+	done       bool
 
 	conn *websocket.Conn
 	send chan map[string]any
@@ -32,6 +37,7 @@ func NewPlayer(id, name string, conn *websocket.Conn, room *Room) *Player {
 
 func (p *Player) ReadPump() {
 	defer func() {
+		log.Println(p.id, "Disconnected")
 		if p.room != nil {
 			p.room.RemovePlayer(p.id)
 		}

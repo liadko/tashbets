@@ -34,9 +34,14 @@
     background-color: #000000;
 
 }
+.enemy-cell.win {
+    background-color: #BAFFC9;
+
+}
 .enemy-cell.filled {
     background-color: #F99393;
 
+    
 }
 .enemy-cell.selected {
     /* background-color: #BAFFC9; */

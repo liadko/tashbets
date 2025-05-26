@@ -23,8 +23,8 @@ func main() {
 		ServeWS(hub, w, r)
 	})
 
-	fmt.Println("Starting WebSocket Server on :8080")
-	err = http.ListenAndServe(":8080", nil)
+	fmt.Println("Starting WebSocket Server on :21568")
+	err = http.ListenAndServe(":21568", nil)
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}
