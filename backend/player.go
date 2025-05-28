@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -24,6 +25,11 @@ type Player struct {
 
 	room *Room
 }
+
+const (
+	pongWait   = 40 * time.Second
+	pingPeriod = (pongWait * 9) / 10
+)
 
 func NewPlayer(id, name string, conn *websocket.Conn, room *Room) *Player {
 	return &Player{

@@ -3,7 +3,7 @@
     display: flex;
 
     width: 100%;
-    height: 65px;
+    height: 70px;
     background-color: #DCEFFF;
     color: black;
 }
@@ -25,5 +25,5 @@
     font-weight: 400;
     text-align: left;
     padding-right: 10px;
-    line-height: 1.3em;
+    line-height: 1.2em;
 }

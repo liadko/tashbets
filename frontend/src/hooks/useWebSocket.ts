@@ -31,7 +31,7 @@ export function useWebSocket(url: string) {
 
         ws.onclose = (event) => {
             setServerStatus('closed')
-            console.warn("Websocket Closed:", event.reason)
+            console.warn(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`)
             retryRef.current = setTimeout(connect, retryDelay)
         }
         ws.onerror = (event) => {

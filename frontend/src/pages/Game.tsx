@@ -76,6 +76,14 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
     }, [gridState, playerState, isReady])
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            sendMessage({ type: "__ping" });
+        }, 30000); // every 30s
+
+        return () => clearInterval(interval);
+    }, [sendMessage]);
+
 
     // fetch info about room. single time thing
     useEffect(() => {
@@ -135,7 +143,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 });
             }
             else if (msg.type === "player_update") {
-                if(msg.id == id) return;
+                if (msg.id == id) return;
 
                 setEnemies((prev) => {
                     if (!prev[msg.id].success && msg.success) {
@@ -153,13 +161,13 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
                     // no success
                     return {
-                            ...prev,
-                            [msg.id]: {
-                                ...prev[msg.id],
-                                ready: msg.ready,
-                                ghostState: msg.ghostState,
-                            }
+                        ...prev,
+                        [msg.id]: {
+                            ...prev[msg.id],
+                            ready: msg.ready,
+                            ghostState: msg.ghostState,
                         }
+                    }
 
                 })
 
@@ -308,7 +316,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         setReady(prev => !prev)
     }
 
-    
+
 
     function triggerShake() {
         setShaking(false) // reset first
@@ -409,7 +417,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                     <img src="/close.svg" className="close-button" alt="Close"
                         onClick={leaveRoom} />
 
-                    <div className="room-code" onClick={() => {triggerCopy(); copyToClipboard(roomCode)}}>
+                    <div className="room-code" onClick={() => { triggerCopy(); copyToClipboard(roomCode) }}>
                         ROOM: <span className='actual-code'>{roomCode}</span>
                         <img src="/copy-paste.svg" className="copy-icon" alt="Copy" />
                         {copying && <span className='copied-tooltip'>Copied!</span>}

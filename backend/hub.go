@@ -20,7 +20,14 @@ func (h *Hub) CreateRoom() (*Room, string) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	code := GenerateRoomCode()
+	var code string
+
+	exists := true
+	for exists {
+		code = GenerateRoomCode()
+		_, exists = h.rooms[code]
+	}
+
 	room := NewRoom(code)
 	h.rooms[code] = room
 

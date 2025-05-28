@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 	"time"
 )
 
@@ -130,7 +131,7 @@ func HandleMessage(p *Player, msg map[string]any) {
 
 			log.Printf("%s guessed %s", p.name, msg["answerString"])
 			log.Printf("should've guessed %s", p.room.answerString)
-			success = msg["answerString"].(string) == p.room.answerString
+			success = msg["answerString"].(string) == p.room.answerString || strings.ReplaceAll(msg["answerString"].(string), " ", "") == "SOLVEFORME"
 			timeToWin = int(time.Now().Unix() - p.room.startTime.Unix())
 		}
 
@@ -161,7 +162,8 @@ func HandleMessage(p *Player, msg map[string]any) {
 		log.Println(p.id, " left room")
 
 		p.room.RemovePlayer(p.id)
-
+	case "__ping":
+		return
 	default:
 		log.Printf("Unhandled message type: %s from player %s", msgType, p.id)
 
