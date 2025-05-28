@@ -8,6 +8,7 @@ export function useWebSocket(url: string) {
     const retryDelay = 1000 // ms
 
     const connect = useCallback(() => {
+
         clearTimeout(retryRef.current!)          // cancel pending retries
 
         const ws = new WebSocket(url)
@@ -15,7 +16,7 @@ export function useWebSocket(url: string) {
 
 
         ws.onopen = () => {
-            //console.log('WebSocket connected')
+            console.log('WebSocket connected')
             setServerStatus('open')
         };
 
@@ -28,12 +29,18 @@ export function useWebSocket(url: string) {
             }
         };
 
-        const schedule = () => {
+        ws.onclose = (event) => {
             setServerStatus('closed')
+            console.warn("Websocket Closed:", event.reason)
             retryRef.current = setTimeout(connect, retryDelay)
         }
-        ws.onclose = schedule
-        ws.onerror = schedule
+        ws.onerror = (event) => {
+            setServerStatus('closed')
+            console.warn("Websocket Error:", event.target)
+
+            retryRef.current = setTimeout(connect, retryDelay)
+
+        }
 
     }, [url, retryDelay])
 
@@ -45,6 +52,7 @@ export function useWebSocket(url: string) {
 
         return () => {
             console.log("effect unmounts")
+            setServerStatus('closed')
             clearTimeout(retryRef.current!)
             wsRef.current?.close()
         };

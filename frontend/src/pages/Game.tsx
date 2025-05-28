@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import './Game.css'
 import Cluebar from '../components/Clubar'
 import Grid from '../components/Grid'
@@ -49,6 +49,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
     const [shaking, setShaking] = useState<boolean>(false)
     const [copying, setCopying] = useState<boolean>(false)
+    const copyingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
 
     // ----------- Networking -----------
@@ -320,12 +321,13 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         })
     }
     function triggerCopy() {
+        clearTimeout(copyingTimeoutRef.current!)
         setCopying(false) // reset first
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 setCopying(true)
-                setTimeout(() => setCopying(false), 1500)
+                copyingTimeoutRef.current = setTimeout(() => setCopying(false), 1500)
             })
         })
     }

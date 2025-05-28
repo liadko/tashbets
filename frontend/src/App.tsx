@@ -8,7 +8,7 @@ import { SessionProvider } from './context/SessionContext';
 
 function App() {
 
-    const { sendMessage, setMessageHandler: setHandler, serverStatus } = useWebSocket('ws://87.71.153.26:8082/ws')
+    const { sendMessage, setMessageHandler: setHandler, serverStatus } = useWebSocket('/ws')
 
 
     return <>
