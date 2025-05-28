@@ -109,6 +109,15 @@ func LoadPuzzleJson(date string) (map[string]any, error) {
 	return puzzle, nil
 }
 
+func LoadPuzzleJsonRandom() (map[string]any, string, error) {
+
+	dateStr := GetRandomDate()
+
+	puzzle, err := LoadPuzzleJson(dateStr)
+
+	return puzzle, dateStr, err
+}
+
 func NytDownloader() {
 	for y := 2024; y < 2025; y++ {
 		for m := 1; m <= 12; m++ {

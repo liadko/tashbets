@@ -25,4 +25,24 @@ export function smartTeleport(initialCellPos: [number, number], dir: 0 | 1, grid
 
 }
 
+export function copyToClipboard(text: string) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text)
+  } else {
+    const textarea = document.createElement("textarea")
+    textarea.value = text
+    textarea.style.position = "fixed" // avoid scrolling to bottom
+    document.body.appendChild(textarea)
+    textarea.focus()
+    textarea.select()
+    try {
+      document.execCommand("copy")
+    } catch (err) {
+      console.error("Fallback copy failed", err)
+    }
+    document.body.removeChild(textarea)
+  }
+}
+
+
 

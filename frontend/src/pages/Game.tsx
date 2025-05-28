@@ -13,7 +13,7 @@ import { useSession } from '../context/SessionContext'
 
 import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, GhostState, EnemyState } from '../types/gameTypes'
 import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex, getAnswerString, fillGuesses } from '../utils/gridUtils'
-import { smartTeleport } from '../utils/playerUtils'
+import { copyToClipboard, smartTeleport } from '../utils/playerUtils'
 import { getDefaultEnemyState, getGhostState, getTimeString } from '../utils/ghostUtils'
 
 
@@ -48,6 +48,8 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     const [startTime, setStartTime] = useState<number>(0)
     const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
     const [shaking, setShaking] = useState<boolean>(false)
+    const [copying, setCopying] = useState<boolean>(false)
+
 
     // ----------- Networking -----------
     const [enemies, setEnemies] = useState<Record<string, EnemyState>>({})
@@ -132,17 +134,35 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 });
             }
             else if (msg.type === "player_update") {
-                setEnemies((prev) => ({
-                    ...prev,
-                    [msg.id]: {
-                        ...prev[msg.id],
-                        ready: msg.ready,
-                        ghostState: msg.ghostState,
-                        infoText: msg.success ? getTimeString(msg.timeToWin) : prev[msg.id].infoText,
-                        success: msg.success,
-                        timeToWin: msg.timeToWin,
+                if(msg.id == id) return;
+
+                setEnemies((prev) => {
+                    if (!prev[msg.id].success && msg.success) {
+                        return {
+                            ...prev,
+                            [msg.id]: {
+                                ...prev[msg.id],
+                                ready: msg.ready,
+                                ghostState: msg.ghostState,
+                                infoText: getTimeString(msg.timeToWin),
+                                success: msg.success,
+                            }
+                        }
                     }
-                }))
+
+                    // no success
+                    return {
+                            ...prev,
+                            [msg.id]: {
+                                ...prev[msg.id],
+                                ready: msg.ready,
+                                ghostState: msg.ghostState,
+                            }
+                        }
+
+                })
+
+
             }
             else if (msg.type === "game_start") {
                 console.log("AYO game starting")
@@ -175,7 +195,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         setPuzzleData(puzzleData)
         const newGrid = createGrid(puzzleData.body[0].cells)
         setGrid(newGrid)
-        initGrid(newGrid)
+        handleTeleport([0, 0], 0, newGrid)
     }
 
     // key input
@@ -271,17 +291,6 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         }
     }, [name, roomCode]);
 
-    // Game Logic
-    function initGrid(grid: GridState) {
-        // const firstCell = getValidCell(grid)
-        // setCell(firstCell)
-        handleTeleport([0, 0], 0, grid)
-
-    }
-
-    function readyClick() {
-        setReady(prev => !prev)
-    }
 
     function handleTeleport(initialCellPos: [number, number], dir: 0 | 1, grid?: GridState) {
         if (grid === undefined) grid = gridState
@@ -291,6 +300,14 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
         setCell(newCell)
         setDir(newDir)
     }
+
+    // Screen Logic
+
+    function readyClick() {
+        setReady(prev => !prev)
+    }
+
+    
 
     function triggerShake() {
         setShaking(false) // reset first
@@ -302,6 +319,18 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
             })
         })
     }
+    function triggerCopy() {
+        setCopying(false) // reset first
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setCopying(true)
+                setTimeout(() => setCopying(false), 1500)
+            })
+        })
+    }
+
+
     // assumes live gridState
     function handleClickCell(row: number, col: number) {
         if (!gridState) return // don't allow clicks before grid has formed
@@ -378,9 +407,10 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                     <img src="/close.svg" className="close-button" alt="Close"
                         onClick={leaveRoom} />
 
-                    <div className="room-code" onClick={() => navigator.clipboard.writeText(roomCode)}>
-                        ROOM: <span>{roomCode}</span>
+                    <div className="room-code" onClick={() => {triggerCopy(); copyToClipboard(roomCode)}}>
+                        ROOM: <span className='actual-code'>{roomCode}</span>
                         <img src="/copy-paste.svg" className="copy-icon" alt="Copy" />
+                        {copying && <span className='copied-tooltip'>Copied!</span>}
                     </div>
 
                     <span className='puzzle-date'>{puzzleDate}</span>

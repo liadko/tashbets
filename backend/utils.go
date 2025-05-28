@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func DateToString(dateString string) string {
+func PrettyDateString(dateString string) string {
 	date, _ := time.Parse("2006-01-02", dateString)
 	formatted := date.Format("January 2")
 
@@ -79,6 +79,33 @@ func GetNonSaturday() (string, bool) {
 	dateStr := date.Format("2006-01-02")
 
 	return dateStr, today
+}
+
+// of course it won't be a saturday
+func GetRandomDate() string {
+
+	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
+	delta := end.Unix() - start.Unix()
+
+	var date time.Time
+	isSaturday := true
+	for isSaturday {
+
+		// get random day
+		randomOffsetBig, err := rand.Int(rand.Reader, big.NewInt(delta))
+
+		if err != nil {
+			panic(err)
+		}
+
+		randomOffset := randomOffsetBig.Int64()
+
+		date = start.Add(time.Duration(randomOffset) * time.Second)
+		isSaturday = date.Weekday() == time.Saturday
+	}
+
+	return date.Format("2006-01-02")
 }
 
 func GenerateRoomCode() string {

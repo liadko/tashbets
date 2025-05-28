@@ -66,7 +66,6 @@ export interface EnemyState {
     infoText: string
 
     success: boolean
-    timeToWin?: number
 
     ghostState: GhostState
 }

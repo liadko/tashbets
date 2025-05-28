@@ -100,6 +100,7 @@ func HandleMessage(p *Player, msg map[string]any) {
 			"puzzleData": p.room.puzzleData,
 			"puzzleDate": p.room.puzzleDate,
 		}
+
 	case "update_state":
 
 		// extract the raw map (one check)

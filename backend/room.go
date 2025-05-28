@@ -25,10 +25,11 @@ func NewRoom(code string) *Room {
 	var puzzleData map[string]any
 	var err error
 
+	today = false
 	if today {
 		puzzleData, err = FetchTodayPuzzle()
 	} else {
-		puzzleData, err = LoadPuzzleJson(puzzleDate)
+		puzzleData, puzzleDate, err = LoadPuzzleJsonRandom()
 	}
 
 	if err != nil {
@@ -42,7 +43,7 @@ func NewRoom(code string) *Room {
 		players:      make(map[string]*Player),
 		gameRunning:  false,
 		puzzleData:   puzzleData,
-		puzzleDate:   DateToString(puzzleDate),
+		puzzleDate:   PrettyDateString(puzzleDate),
 		answerString: answerString,
 	}
 }
