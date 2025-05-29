@@ -81,9 +81,15 @@
     
     margin-right: 10px;
 }
-
+/* 
+.clue.sibling {
+    display: flex;
+    align-items: stretch;
+    
+} */
 .clue.sibling .clue-side-highlight {
     background-color:#A7D8FF;
+    top: auto;
 }
 /* 
 .clue:hover {

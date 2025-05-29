@@ -129,7 +129,10 @@ p {
 
 }
 
-.landing-controls > * {
+.landing-controls .landing-name-input,
+.landing-controls .landing-code-input,
+.landing-controls .landing-join-button,
+.landing-controls .landing-create-button {
     padding: 7px;
     font-size: 16px;
     
@@ -145,12 +148,16 @@ p {
 
     color: black;
 
-    height: 45px;
+    height: 30px;
 }
 
 
 
 .landing-code-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+
     padding: 8px;
     background-color: #F3F3F3;
     text-align: center;
@@ -170,7 +177,21 @@ p {
     font-size: 16px;
 }
 
+.landing-join-button:focus,
+.landing-create-button:focus {
+  outline: none;
+  box-shadow: 2px 2px 5px #6f6f6f;
+}
+
+.landing-join-form {
+    width: 170px;
+    box-sizing: border-box;
+
+}
 .landing-join-button {
+    width: 100%;
+    box-sizing: border-box;
+
     background-color: black;
     color: white;
     margin-bottom: 40px;

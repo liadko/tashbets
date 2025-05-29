@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../context/SessionContext'
 
 
-
 import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzzleData, PlayerState, GhostState, EnemyState } from '../types/gameTypes'
 import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex, getAnswerString, fillGuesses } from '../utils/gridUtils'
 import { copyToClipboard, smartTeleport } from '../utils/playerUtils'
@@ -283,6 +282,10 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                 const clueFirstCellIndex = nextClue.cells[0];
                 handleTeleport(getGridPosByCellIndex(clueFirstCellIndex), nextClue.dir, gridState)
             }
+            else if (event.key === "Tab" && !event.shiftKey) {
+                event.preventDefault();
+            }
+
 
         }
 

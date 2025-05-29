@@ -47,7 +47,11 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
             showToast("Server Unavailable")
 
     }
-    function handleJoin() {
+
+    function handleJoin(e : React.FormEvent) {
+        
+        e.preventDefault(); // makes the form not refresh the page
+
         const code = codeRef.current?.value.trim().toUpperCase();
         const name = nameRef.current?.value.trim();
 
@@ -153,14 +157,15 @@ export default function LandingPage({ sendMessage, setMessageHandler }: LandingP
                     </div>
 
                     <div className="landing-controls">
-                        <input type="text" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue={name} />
+                        <input type="text" id="username" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue={name} />
 
+                        <form onSubmit={handleJoin} className='landing-join-form'>
+                            <input type="text" id="room-code" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />
 
-                        <input type="text" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />
+                            <button id="join-btn" type='submit' className="landing-join-button">JOIN ROOM</button>
+                        </form>
 
-                        <button className="landing-join-button" onClick={handleJoin}>JOIN ROOM</button>
-
-                        <button className="landing-create-button" onClick={handleCreate}>CREATE ROOM</button>
+                        <button id='create-btn' className="landing-create-button" onClick={handleCreate}>CREATE ROOM</button>
                     </div>
 
                 </div>
