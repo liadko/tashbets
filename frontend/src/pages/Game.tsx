@@ -272,7 +272,9 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
             }
 
             // enter - skip clue
-            else if (event.key == "Enter") {
+            else if (event.key == "Enter" || event.key === "Tab") {
+                event.preventDefault() // prevents tab hopping around the browser
+                
                 if (!selectedClues) return
 
                 const currentIndex = selectedClues.mainClueId;
@@ -281,9 +283,6 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
 
                 const clueFirstCellIndex = nextClue.cells[0];
                 handleTeleport(getGridPosByCellIndex(clueFirstCellIndex), nextClue.dir, gridState)
-            }
-            else if (event.key === "Tab" && !event.shiftKey) {
-                event.preventDefault();
             }
 
 
