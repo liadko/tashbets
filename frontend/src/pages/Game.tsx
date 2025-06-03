@@ -14,6 +14,7 @@ import type { Cell, RawCell, GridState, Clue, RawClue, SelectedClueData, RawPuzz
 import { createGrid, editGuess, getCell, getFirstEmptyCellPos, moveSelected, getGridPosByCellIndex, getAnswerString, fillGuesses } from '../utils/gridUtils'
 import { copyToClipboard, smartTeleport } from '../utils/playerUtils'
 import { getDefaultEnemyState, getGhostState, getTimeString } from '../utils/ghostUtils'
+import { useCopyFlags } from '../hooks/useCopyFlags'
 
 
 type GameProps = {
@@ -47,7 +48,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
     const [startTime, setStartTime] = useState<number>(0)
     const [elapsedSeconds, setElapsedSeconds] = useState<number>(0)
     const [shaking, setShaking] = useState<boolean>(false)
-    const [copying, setCopying] = useState<boolean>(false)
+    const { copying1, copying2, setCopying } = useCopyFlags()
     const copyingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
 
@@ -274,7 +275,7 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
             // enter - skip clue
             else if (event.key == "Enter" || event.key === "Tab") {
                 event.preventDefault() // prevents tab hopping around the browser
-                
+
                 if (!selectedClues) return
 
                 const currentIndex = selectedClues.mainClueId;
@@ -330,14 +331,14 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
             })
         })
     }
-    function triggerCopy() {
+    function triggerCopy(copyIndex: 1 | 2) {
         clearTimeout(copyingTimeoutRef.current!)
-        setCopying(false) // reset first
+        setCopying(copyIndex, false) // reset first
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                setCopying(true)
-                copyingTimeoutRef.current = setTimeout(() => setCopying(false), 1500)
+                setCopying(copyIndex, true)
+                copyingTimeoutRef.current = setTimeout(() => setCopying(copyIndex, false), 1500)
             })
         })
     }
@@ -419,10 +420,10 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                     <img src="/close.svg" className="close-button" alt="Close"
                         onClick={leaveRoom} />
 
-                    <div className="room-code" onClick={() => { triggerCopy(); copyToClipboard(roomCode) }}>
+                    <div className="room-code" onClick={() => { triggerCopy(1); copyToClipboard(roomCode) }}>
                         ROOM: <span className='actual-code'>{roomCode}</span>
                         <img src="/copy-paste.svg" className="copy-icon" alt="Copy" />
-                        {copying && <span className='copied-tooltip'>Copied!</span>}
+                        {copying1 && <span className='copied-tooltip'>Copied!</span>}
                     </div>
 
                     <span className='puzzle-date'>{puzzleDate}</span>
@@ -461,13 +462,25 @@ export default function Game({ sendMessage, setMessageHandler, serverStatus }: G
                     </div>
                 </div>
                 <div className='enemy-side'>
-                    {Object.values(enemies).map((enemy) => (
-                        <EnemyGrid
-                            key={enemy.id}
-                            grid={gridState}
-                            enemyState={enemy}
-                        />
-                    ))}
+
+                    {(Object.keys(enemies).length == 0) ?
+                        (<>
+                            <span className='invite-friends'>
+                                Invite Friends Using Room Code
+                            </span>
+                            <div className="room-code" onClick={() => { triggerCopy(2); copyToClipboard(roomCode) }}>
+                                <span className='actual-code big'>{roomCode}</span>
+                                <img src="/copy-paste.svg" className="copy-icon big" alt="Copy" />
+                                {copying2 && <span className='copied-tooltip big'>Copied!</span>}
+                            </div>
+                        </>)
+                        : (Object.values(enemies).map((enemy) => (
+                            <EnemyGrid
+                                key={enemy.id}
+                                grid={gridState}
+                                enemyState={enemy}
+                            />
+                        )))}
                 </div>
 
             </div>

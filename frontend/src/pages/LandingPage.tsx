@@ -1,184 +1,122 @@
-import { useEffect, useRef, useState, useMemo, useCallback, useContext } from 'react'
-import './LandingPage.css'
-import { useNavigate } from 'react-router-dom';
-import { useSession } from '../context/SessionContext'
-import { Toaster, Toast } from '../components/Toaster';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useIsDesktop } from "../hooks/useIsDesktop";
+import LandingDesktop from "./LandingDesktop";
+import LandingMobile from "./LandingMobile";
+import { useNavigate } from "react-router-dom";
+import { useSession } from "../context/SessionContext";
+import { Toaster, Toast } from "../components/Toaster";
 
-type LandingProps = {
-    sendMessage: (msg: any) => boolean;
-    setMessageHandler: (fn: (msg: any) => void) => void;
+type LandingPageProps = {
+  sendMessage: (msg: any) => boolean;
+  setMessageHandler: (fn: (msg: any) => void) => void;
 };
-export default function LandingPage({ sendMessage, setMessageHandler }: LandingProps) {
-    // ----------- constants -----------
-    const navigate = useNavigate()
-    const codeRef = useRef<HTMLInputElement>(null)
-    const nameRef = useRef<HTMLInputElement>(null)
-    const { name, setName, setRoomCode, setId } = useSession()
 
-    // ----------- Toasts -----------
-    const [toasts, setToasts] = useState<Toast[]>([])
+export default function LandingPage({
+  sendMessage,
+  setMessageHandler,
+}: LandingPageProps) {
+  const navigate = useNavigate();
+  const { name: savedName, setName, setRoomCode, setId } = useSession();
 
-    // call this whenever you want to show a message
-    const showToast = useCallback((message: string) => {
-        const id = Date.now()
-        setToasts(prev => [...prev, { id, message }])
-        // remove after 3s
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id))
-        }, 30000)
-    }, [])
+  // Controlled state for both inputs
+  const [nameValue, setNameValue] = useState(savedName || "");
+  const [codeValue, setCodeValue] = useState("");
 
-    // ----------- Networking -----------
-    function handleCreate() {
-        const name = nameRef.current?.value.trim();
+  // Toasts
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const showToast = useCallback((msg: string) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message: msg }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id)), 3000;
+    }, 3000);
+  }, []);
 
-        if (!name) {
-            showToast("Please Enter Your Name")
-            return;
-        }
-
-        setName(name)
-
-        const success = sendMessage({
-            "type": "create_room",
-            "name": name
-        })
-        if (!success)
-            showToast("Server Unavailable")
-
+  // Create room handler
+  const handleCreate = useCallback(() => {
+    if (!nameValue.trim()) {
+      showToast("Please enter your name");
+      return;
     }
+    setName(nameValue.trim());
+    const success = sendMessage({ type: "create_room", name: nameValue.trim() });
+    if (!success) showToast("Server Unavailable");
+  }, [nameValue, sendMessage, setName, showToast]);
 
-    function handleJoin(e : React.FormEvent) {
-        
-        e.preventDefault(); // makes the form not refresh the page
+  // Join room handler
+  const handleJoin = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!nameValue.trim()) {
+        showToast("Please enter your name");
+        return;
+      }
+      if (!codeValue.trim()) {
+        showToast("Please enter room code");
+        return;
+      }
+      setName(nameValue.trim());
+      const upperCode = codeValue.trim().toUpperCase();
+      setRoomCode(upperCode);
+      const success = sendMessage({
+        type: "join_room",
+        name: nameValue.trim(),
+        code: upperCode,
+      });
+      if (!success) showToast("Server Unavailable");
+    },
+    [nameValue, codeValue, sendMessage, setName, setRoomCode, showToast]
+  );
 
-        const code = codeRef.current?.value.trim().toUpperCase();
-        const name = nameRef.current?.value.trim();
+  // Socket message handler
+  useEffect(() => {
+    setMessageHandler((msg) => {
+      switch (msg.type) {
+        case "room_created":
+          setRoomCode(msg.room_code);
+          setId(msg.id);
+          navigate("/game");
+          break;
+        case "room_joined":
+          setRoomCode(msg.room_code);
+          setId(msg.id);
+          navigate("/game");
+          break;
+        case "room_invalid":
+          showToast("Room not found");
+          break;
+        case "room_active":
+          showToast("Room’s game already started");
+          break;
+        default:
+          console.log("Unrecognized message:", msg);
+      }
+    });
+  }, [setMessageHandler, navigate, setId, setRoomCode, showToast]);
 
-        if (!name) {
-            showToast("Please Enter Your Name")
-            return;
-        }
+  // Which view to render?
+  const isDesktop = useIsDesktop();
 
-        if (!code) {
-            showToast("Please Enter Room Code")
-            return;
-        }
+  // Pass all props down to the view component
+  const commonProps = {
+    nameValue,
+    setNameValue,
+    codeValue,
+    setCodeValue,
+    handleCreate,
+    handleJoin,
+    toasts,
+    showToast,
+  };
 
-        setName(name)
-
-        const success = sendMessage({
-            "type": "join_room",
-            "name": name,
-            "code": code
-        })
-        if (!success)
-            showToast("Server Unavailable")
-
-    }
-
-    // ----------- Effects -----------
-    useEffect(() => {
-        setMessageHandler((msg) => {
-            if (msg.type === "room_created") {
-                console.log("Room created with code:", msg.room_code)
-                setRoomCode(msg.room_code)
-                setId(msg.id)
-
-                navigate("/game")
-            }
-            else if (msg.type === "room_joined") {
-                console.log("Room joined with code:", msg.room_code)
-                setRoomCode(msg.room_code)
-                setId(msg.id)
-
-                navigate("/game")
-            }
-            else if (msg.type === "room_invalid") {
-                showToast("Room not found")
-
-
-            }
-            else if (msg.type === "room_active") {
-                showToast("Room's game already started")
-
-
-            }
-            else
-                console.log("Unrecognised message from server, type:", msg.type)
-        })
-    }, [setMessageHandler])
-
-    // ----------- Render -----------
-    return (
-        <>
-            <div className="page-container">
-
-                {/* Header */}
-                <header className="header">
-                    <h1>CROSSWORD ROYALE</h1>
-                    <p>MADE BY LIAD KOREN</p>
-                </header>
-
-                <div className="landing-main-area">
-
-                    <div className="landing-grid-wrapper">
-                        <div className="landing-clue-bar">
-                            <span className="landing-cluebar-label">1A</span>
-                            <span className="landing-cluebar-text">Inspired By NYT Mini Crossword</span>
-                        </div>
-                        <div className='landing-grid'>
-                            <div className="landing-cell lightgray"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell blocked"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell lightgray"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell "></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell eye"></div>
-                            <div className="landing-cell "></div>
-                            <div className="landing-cell eye"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell pink"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell blocked"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell"></div>
-                            <div className="landing-cell blocked"></div>
-                        </div>
-                    </div>
-
-                    <div className="landing-controls">
-                        <input type="text" id="username" className="landing-name-input" ref={nameRef} placeholder="YOUR NAME" spellCheck="false" defaultValue={name} />
-
-                        <form onSubmit={handleJoin} className='landing-join-form'>
-                            <input type="text" id="room-code" className="landing-code-input" ref={codeRef} placeholder="ROOM CODE" spellCheck="false" maxLength={4} />
-
-                            <button id="join-btn" type='submit' className="landing-join-button">JOIN ROOM</button>
-                        </form>
-
-                        <button id='create-btn' className="landing-create-button" onClick={handleCreate}>CREATE ROOM</button>
-                    </div>
-
-                </div>
-
-
-                <Toaster toasts={toasts} />
-
-            </div>
-
-        </>
-
-    )
+  return (
+    <>
+      {isDesktop ? (
+          <LandingDesktop {...commonProps} />
+        ) : (
+          <LandingMobile {...commonProps} />
+      )}
+      
+    </>
+  );
 }
-
-
-

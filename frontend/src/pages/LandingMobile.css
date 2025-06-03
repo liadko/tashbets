@@ -1,0 +1,193 @@
+.landing-mobile-container {
+    display: flex;
+    flex-direction: column; /* vertical stack */
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    height: 80%; 
+    margin: 0;
+    margin-top: 15px;
+}
+
+.landing-header-mobile {
+    text-align: center;
+    margin-bottom: 50px;
+    color: black;
+
+}
+.landing-header-mobile h2 {
+    margin: 0px;
+    font-size: 3.2em;
+}
+
+.landing-header-mobile h1 {
+    font-size: 5.5em;
+    font-weight: 700;
+    line-height: 50px;
+    margin-bottom: 25px;
+    margin-top: 0px;
+}
+
+.landing-content-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 360px;
+  align-items: center;
+}
+
+.clue-bar-mobile {
+    display: flex;
+    width: 80%;
+    height: 40px;
+    background-color: #DCEFFF;
+    color: black;
+    margin-bottom: 10px;
+    margin: auto;
+}
+.clue-label-mobile {
+    height: 100%;
+    aspect-ratio: 1;
+    font-size: 1.2em;
+    font-weight: 700;
+    align-content: center;
+    text-align: center;
+}
+.clue-text-mobile {
+    height: 100%;
+    margin-right: auto;
+    align-content: center;
+    font-size: 1em;
+    font-weight: 500;
+    text-align: left;
+}
+
+/* Controls */
+.controls-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 230px;
+    justify-content: flex-end;
+}
+.name-input-mobile,
+.code-input-mobile,
+.join-button-mobile,
+.create-button-mobile {
+    padding: 7px;
+    font-size: 18px;
+    
+    font-weight: bold;
+}
+.name-input-mobile {
+    padding: 0px;
+    margin-bottom: 40px;
+    background-color: #F3F3F3;
+    text-align: center;
+
+    color: black;
+
+    height: 50px;
+
+}
+.code-input-mobile {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+
+    padding: 8px;
+    background-color: #F3F3F3;
+    text-align: center;
+    color: black;
+
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+.join-button-mobile,
+.create-button-mobile {
+    cursor: pointer;
+    border: none;
+    color: black;
+    
+    font-size: 22px;
+}
+.join-button-mobile {
+    width: 100%;
+    box-sizing: border-box;
+
+    background-color: black;
+    color: white;
+    margin-bottom: 30px;
+}
+.create-button-mobile {
+    background-color: white;
+    border: 1px solid black;
+
+    margin-bottom:0px;
+}
+
+/*Maybe Remove This*/
+.join-button-mobile:focus,
+.create-button-mobile:focus {
+  outline: none;
+  box-shadow: 2px 2px 5px #6f6f6f;
+}
+
+/* Fake Input */
+
+.fake-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  /* The rest comes from name-input-mobile or code-input-mobile */
+  cursor: pointer;
+  user-select: none;
+}
+/* 
+.fake-input--active {
+  border: 2px solid rgb(0, 0, 0);  Optional: your "focus" styling 
+} */
+
+
+.fake-input__text {
+  flex: 1;
+  text-align: center;
+}
+
+.fake-input__placeholder {
+  opacity: 0.5;
+}
+
+/* Use your existing .name-input-mobile and .code-input-mobile for base styles */
+
+.blinking-cursor {
+  display: inline-block;
+  width: 1ch;
+  margin-left: -3px;
+  animation: blink-cursor 1s steps(1) infinite;
+  color: #222;
+  font-weight: 400;
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+@keyframes blink-cursor {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Virtual keyboard wrapper at bottom */
+.vk-wrapper-mobile {
+  position: fixed;
+  color: black;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #f3f3f3;
+  padding-top: 8px;
+}
+

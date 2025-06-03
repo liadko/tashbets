@@ -12,7 +12,7 @@
     height: 80px;
     width: 100vw;
 
-    
+
     display: flex;
     align-items: center;
     z-index: 10;
@@ -25,7 +25,7 @@
 }
 
 .close-button:active {
-        transform: scale(0.95);
+    transform: scale(0.95);
 
 }
 
@@ -46,12 +46,20 @@
     border-radius: 5px;
     transition: box-shadow 0.1s ease;
 
-    
+
     position: relative;
+
 }
 
 .room-code .actual-code {
     letter-spacing: 2px;
+}
+
+.room-code .actual-code.big {
+    letter-spacing: 4px;
+    line-height: 35px;
+    font-size: 1.6em;
+    font-weight: 500;
 }
 
 .room-code:hover {
@@ -67,41 +75,52 @@
     height: 16px;
 }
 
+.copy-icon.big {
+    width: 20px;
+    height: 20px;
+}
 
 @keyframes fade-slide-down {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
-  }
-  15% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  85% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(10px);
-  }
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    85% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
 }
 
 .copied-tooltip {
-  position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #222;
-  font-size: 0.9em;
-  letter-spacing: 1px;
-  font-weight: 400;
-  padding: 4px 8px;
-  border-radius: 4px;
-  animation: fade-slide-down 1.5s ease forwards;
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 100;
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #222;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+    font-weight: 400;
+    padding: 4px 8px;
+    border-radius: 4px;
+    animation: fade-slide-down 1.5s ease forwards;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+}
+
+.copied-tooltip.big {
+    top: 45px
 }
 
 .puzzle-date {
@@ -211,21 +230,39 @@
     width: 60px;
     text-align: left;
 }
+
 .timer.done {
     color: #006B2E;
 }
 
 @keyframes shake {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-5px); }
-  40% { transform: translateX(5px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-  100% { transform: translateX(0); }
+    0% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-5px);
+    }
+
+    40% {
+        transform: translateX(5px);
+    }
+
+    60% {
+        transform: translateX(-4px);
+    }
+
+    80% {
+        transform: translateX(4px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
 }
 
 .shake {
-  animation: shake 0.4s ease-out;
+    animation: shake 0.4s ease-out;
 }
 
 .puzzle-area {
@@ -253,4 +290,11 @@
     justify-content: center;
     gap: 2em;
     background: #F3F3F3;
+}
+
+
+.invite-friends {
+    color: black;
+    font-size: 1.3em;
+    margin-bottom: -15px;
 }

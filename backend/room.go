@@ -25,7 +25,7 @@ func NewRoom(code string) *Room {
 	var puzzleData map[string]any
 	var err error
 
-	today = false
+	//today = false
 	if today {
 		puzzleData, err = FetchTodayPuzzle()
 	} else {

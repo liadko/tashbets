@@ -10,13 +10,20 @@
   z-index: 1000;
 }
 
+.toaster.raised {
+    bottom: 180px;
+}
+
 .toast {
-  color: #FC7D7D;
+  
+  width: 300px;
+    color: #FC7D7D;
   border-radius: 0.25em;
   font-size: 1.3em;
   font-weight: 700;
   text-align: center;
   animation: fade-in-out 3s forwards;
+
 }
 
 @keyframes fade-in-out {
